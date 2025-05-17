@@ -1,11 +1,11 @@
 <?php
 
-use Illuminate\Database\Eloquent\Casts\ArrayObject;
+namespace App\Class;
+
+use ArrayObject;
 
 
-/**
- * Clase Table que extiende ArrayObject para manejar una colección genérica de elementos.
- */
+
 class Table extends ArrayObject
 {
  

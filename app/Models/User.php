@@ -1,6 +1,11 @@
 <?php
 
-require_once __DIR__ . "/../../database/database.php";
+namespace App\Models;
+
+use App\Database\BD;
+use DateTime;
+
+
 
 
 class User

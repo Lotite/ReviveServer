@@ -1,8 +1,13 @@
 <?php
 
+namespace App\Database;
 
-require_once __DIR__ . "/../app/Class/Users.php";
-require_once __DIR__ . "/../app/Class/Devices.php";
+use App\Class\Devices;
+use App\Class\Medias;
+use App\Class\Users;
+use Exception;
+use PDO;
+
 
 
 
@@ -19,12 +24,14 @@ class BD
     public static Users $Users;
 
     public static Devices $Devices;
+    public static Medias $Medias;
 
     public static function loadData(string $table = "all")
     {
         $function = [
             "users" => [self::class, 'loadUsers'],
             "devices" => [self::class, 'loadDevices'],
+            "media" => [self::class, 'loadMedias'],
         ];
 
         if ($table === "all") {
@@ -44,6 +51,13 @@ class BD
     public static function loadDevices()
     {
         self::$Devices = new Devices(self::getData("devices"));
+    }
+
+
+
+    public static function loadMedias()
+    {
+        self::$Medias = new Medias(self::getData("media"));
     }
 
 

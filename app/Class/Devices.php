@@ -1,12 +1,12 @@
 <?php
 
-require_once __DIR__ . "/Table.php";
-require_once __DIR__ . "/../Models/Device.php";
+namespace App\Class;
 
-/**
- * Clase Devices que representa una colección de objetos Device.
- * Extiende la clase Table para manejar una lista de dispositivos.
- */
+use App\Class\Table;
+use App\Models\Device;
+use InvalidArgumentException;
+
+
 class Devices extends Table
 {
     /**

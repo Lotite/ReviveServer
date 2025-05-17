@@ -1,7 +1,9 @@
 <?php
 
-require_once __DIR__ . "/../../database/database.php";
-require_once __DIR__ . "/../Functions/DataManager.php";
+namespace App\Models;
+
+use App\Database\BD;
+use DateTime;
 
 class Device
 {

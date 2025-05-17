@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Database\BD;
 use App\Http\Controllers\Controller;
+use App\Models\Device;
+use App\Models\User;
 use DataManager;
-use Device;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use User;
-require_once __DIR__ . "/../../../Models/User.php";
-require_once __DIR__ . "/../Controller.php";
-require_once __DIR__ . "/../../../../database/database.php";
+
+
 
 class AuthControler extends Controller
 {
@@ -24,8 +24,8 @@ class AuthControler extends Controller
     public function firstUser(Request $request)
     {
         return Controller::ControlerException($request, function () {
-            $user = \BD::$Users->firstOrNull();
-            return Controller::responseMessage(true, 'Success', $user, 200);
+            $user = BD::$Users->firstOrNull();
+            return Controller::responseMessage(true, 'Success', ["user", $user], 200);
         });
     }
 
@@ -93,15 +93,13 @@ class AuthControler extends Controller
             ];
             User::createNewUser($data);
 
-            return Controller::responseMessage(true, 'Registro exitoso', null, 200);
+            return Controller::responseMessage(true, 'Registro exitoso');
         });
     }
 
     public function login(Request $request)
     {
         return Controller::ControlerException($request, function () use ($request) {
-
-
             $validator = $this->getValidator($request, 'login');
             if ($validator->fails()) {
                 $errorMessages = $this->errorMessages($validator);
@@ -129,7 +127,9 @@ class AuthControler extends Controller
         return Controller::ControlerException($request, function () use ($request) {
             DataManager::initialize($request);
 
-            $token = DataManager::getSessionData("device");
+            $token = DataManager::getData("device");
+            if ($token == null)
+                return Controller::responseMessage(false, 'No hay dispositivo asociado a la sesión');
             $userId = Device::getUser($token);
             $exist = User::ExistsUserId($userId);
             return Controller::responseMessage($exist, 'Validacion', $token);

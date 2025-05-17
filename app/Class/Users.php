@@ -1,9 +1,9 @@
 <?php
 
+namespace App\Class;
 
-
-require_once __DIR__ . "/Table.php";
-require_once __DIR__ . "/../Models/User.php";
+use App\Class\Table;
+use App\Models\User;
 
 class Users extends Table
 {

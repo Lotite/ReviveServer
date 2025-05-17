@@ -14,7 +14,7 @@ class Controller
 {
     /**
      * Ejecuta un callback dentro de un bloque try-catch para manejar excepciones.
-     * Inicializa DataManager con la solicitud y captura errores para devolver una respuesta JSON con error.
+     * Si ocurre una excepcion enviara una respuesta con el error.
      *
      * @param HttpRequest $request Objeto de la solicitud HTTP.
      * @param callable $callback Función a ejecutar.

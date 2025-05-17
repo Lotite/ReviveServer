@@ -1,6 +1,7 @@
 <?
-require_once __DIR__ . "/../../database/database.php";
-require_once __DIR__ . "/EntidadBase.php";
+
+use App\Database\BD;
+
 
 
 abstract class ModeloBase implements EntidadBase

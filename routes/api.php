@@ -3,8 +3,7 @@
 use App\Http\Controllers\Api\AuthControler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-require_once __DIR__ . "/../database/database.php";
-require_once __DIR__ . "/../app/Functions/DataManager.php";
+
 
 /*
 |--------------------------------------------------------------------------
@@ -26,8 +25,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('/register', [AuthControler::class, "register"]);
 Route::post('/login', [AuthControler::class, "login"]);
 Route::post('/validateSession', [AuthControler::class, "validateSession"]);
-Route::post('/session', function () {
-    DataManager::initialize();
-    DataManager::setSessionData("h", "hola");
-    return DataManager::getSessionData("h");
-});
+Route::post('/pruebas', []);
