@@ -1,0 +1,12 @@
+@api = http://127.0.0.1:8000/api/
+
+Post {{api}}register
+Content-Type: application/json
+
+{
+  "name": "testuser",
+  "email": "holaaaa@gmail.com",
+  "password": "password123",
+  "passwordConfirmation": "password123",
+  "terms" : true
+}
