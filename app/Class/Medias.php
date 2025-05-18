@@ -7,11 +7,10 @@ use App\Database\BD;
 use App\Models\Media;
 
 use App\Class\Movies;
+use App\Class\Series;
 
 class Medias extends Table
 {
-
-
     /**
      * Verifica si una variable es una instancia de Medias.
      *
@@ -61,6 +60,25 @@ class Medias extends Table
             return in_array($movie->media_id, $mediaIds);
         });
         return $filteredMovies;
+    }
+
+    /**
+     * Carga la colección de Series para los elementos media en esta lista de Medias.
+     */
+    public function getSeries(): Series
+    {
+        $allSeries = BD::$Series;
+        $mediaIds = [];
+        foreach ($this as $media) {
+            if (isset($media->id)) {
+                $mediaIds[] = $media->id;
+            }
+        }
+        // Filtra las series que tienen media_id en mediaIds
+        $filteredSeries = $allSeries->where(function ($serie) use ($mediaIds) {
+            return in_array($serie->media_id, $mediaIds);
+        });
+        return $filteredSeries;
     }
 
 
@@ -125,4 +143,19 @@ class Medias extends Table
             return in_array($media->id, $movieMediaIds);
         });
     }
+
+    /**
+     * Devuelve una lista de objetos DTO que representan los medias en esta colección.
+     *
+     * @return array Lista de objetos DTO de media.
+     */
+    public function getDTO_List()
+    {
+        $list = [];
+        foreach ($this as $media) {
+            $list[] = $media->getDTO_Media();
+        }
+        return $list;
+    }
+
 }

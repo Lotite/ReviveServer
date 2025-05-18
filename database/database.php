@@ -3,8 +3,11 @@
 namespace App\Database;
 
 use App\Class\Devices;
+use App\Class\Generos;
+use App\Class\GenerosMedia;
 use App\Class\Medias;
 use App\Class\Movies;
+use App\Class\Series;
 use App\Class\Users;
 use Exception;
 use PDO;
@@ -26,20 +29,27 @@ class BD
     public static Movies $Movies;
     public static Devices $Devices;
     public static Medias $Medias;
+    public static Series $Series;
+    public static Generos $Generos;
+    public static GenerosMedia $GeneroMedia;
 
     public static function loadData(string $table = "all")
     {
         $function = [
-            "users" => [self::class, 'loadUsers'],
-            "devices" => [self::class, 'loadDevices'],
-            "media" => [self::class, 'loadMedias'],
-            "movies" => [self::class, 'loadMovies'],
+        "users" => [self::class, 'loadUsers'],
+        "devices" => [self::class, 'loadDevices'],
+        "media" => [self::class, 'loadMedias'],
+        "movies" => [self::class, 'loadMovies'],
+        "series" => [self::class, 'loadSeries'],
+        "generos" => [self::class, 'loadGeneros'],
+        "generomedia" => [self::class, 'loadGeneroMedia'],
         ];
 
         if ($table === "all") {
             foreach ($function as $callback) {
                 call_user_func($callback);
             }
+            self::loadGeneroMedia();
         } elseif (isset($function[$table])) {
             call_user_func($function[$table]);
         }
@@ -61,6 +71,21 @@ class BD
     public static function loadMovies()
     {
         self::$Movies = new Movies(self::getData("movies"));
+    }
+
+    public static function loadSeries()
+    {
+        self::$Series = new Series(self::getData("series"));
+    }
+
+    public static function loadGeneros()
+    {
+        self::$Generos = new Generos(self::getData("generos"));
+    }
+
+    public static function loadGeneroMedia()
+    {
+        self::$GeneroMedia = new GenerosMedia(self::getData("generomedia"));
     }
 
 

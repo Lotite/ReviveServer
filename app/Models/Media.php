@@ -3,138 +3,90 @@
 namespace App\Models;
 
 use App\Database\BD;
-use DateTime;
-
-require_once __DIR__ . "/../../database/database.php";
+use App\DTO\DTOMedia;
+use App\Models\Genero;
+use App\Class\Generos;
 
 class Media
 {
-    public ?int $id;
-    public ?string $title;
-    public ?string $description;
-    public ?DateTime $release_date;
+    public int $id;
+    public string $titulo;
+    public string $descripcion;
+    public ?string $release_date;
     public ?int $tmdb_id;
+    public ?string $type;
 
-    public function __construct(?int $id = null, ?string $title = null, ?string $description = null, ?DateTime $release_date = null, ?int $tmdb_id = null)
+    public array $generos;
+
+
+
+    public function __construct(array $data = [])
     {
-        $this->id = $id;
-        $this->title = $title;
-        $this->description = $description;
-        $this->release_date = $release_date;
-        $this->tmdb_id = $tmdb_id;
+        $this->id = $data['id'] ?? 0;
+        $this->titulo = $data['title'] ?? '';
+        $this->descripcion = $data['description'] ?? '';
+        $this->release_date = $data['release_date'] ?? null;
+        $this->tmdb_id = $data['tmdb_id'] ?? null;
+        $this->type = $data['type'] ?? null;
     }
 
     /**
-     * Creates a new Media instance from an array of data.
+     * Método estático que devuelve una instancia de Media.
      *
-     * @param array $data Data array.
-     * @return Media New Media instance.
+     * @param array|object \$data
+     * @return Media
      */
-    public static function NewMedia(array $data)
+    public static function NewMedia($data): Media
     {
-        $releaseDate = null;
-        if (!empty($data["release_date"])) {
-            $releaseDate = DateTime::createFromFormat('Y-m-d', $data["release_date"]);
+        if (is_object($data)) {
+            $data = (array) $data;
         }
-        return new Media(
-            $data['id'] ?? null,
-            $data['title'] ?? null,
-            $data['description'] ?? null,
-            $releaseDate,
-            $data['tmdb_id'] ?? null
-        );
+        return new Media($data);
     }
 
     /**
-     * Creates a new media record in the database.
+     * Obtiene los géneros relacionados con este media.
      *
-     * @param array $data Data to create media.
-     * @return void
+     * @return Generos Colección de géneros relacionados.
      */
-    public static function createNewMedia(array $data)
+    public function getGeneros(): Generos
     {
-        BD::InsertIntoTable("media", $data);
-    }
+        // Obtener todos los generos
+        $allGeneros = BD::$Generos;
 
-    /**
-     * Checks if a media with given ID exists.
-     *
-     * @param mixed $id Media ID.
-     * @return bool True if exists, false otherwise.
-     */
-    public static function ExistsMediaId($id)
-    {
-        return is_int($id) && BD::exist("id", $id, "media");
-    }
+        // Obtener los ids de generos relacionados con este media desde la tabla generomedia
+        $generoMediaRows = BD::$GeneroMedia->where(function ($row) {
+            return $row->media_id === $this->id;
+        });
 
-    /**
-     * Updates a specific column of the media in the database.
-     *
-     * @param string $column Column name.
-     * @param mixed $value New value.
-     * @return void
-     */
-    public function Update(string $column, mixed $value)
-    {
-        if ($this->id !== null) {
-            BD::UpdateTable("media", $column, $value, $this->id);
+        // Extraer los ids de genero
+        $generoIds = [];
+        foreach ($generoMediaRows as $row) {
+            $generoIds[] = $row->genero_id;
         }
+
+        // Filtrar los generos que coinciden con los ids
+        $relatedGeneros = $allGeneros->where(function (Genero $genero) use ($generoIds) {
+            return in_array($genero->id, $generoIds);
+        });
+
+        return $relatedGeneros ?? [];
     }
 
-    // Getters and setters for each property
-
-    public function getId(): ?int
+    /**
+     * Verifica si esta media pertenece a un género dado.
+     *
+     * @param int $generoId ID del género a verificar.
+     * @return bool Verdadero si pertenece, falso en caso contrario.
+     */
+    public function isOfGenero(int $generoId): bool
     {
-        return $this->id;
+        return BD::$GeneroMedia->any(function ($row) use ($generoId) {
+            return $row->media_id === $this->id && $row->genero_id === $generoId;
+        });
     }
 
-    public function setId(?int $id): void
-    {
-        $this->id = $id;
-    }
-
-    public function getTitle(): ?string
-    {
-        return $this->title;
-    }
-
-    public function setTitle(?string $title): void
-    {
-        $this->title = $title;
-        $this->Update("title", $title);
-    }
-
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function setDescription(?string $description): void
-    {
-        $this->description = $description;
-        $this->Update("description", $description);
-    }
-
-    public function getReleaseDate(): ?DateTime
-    {
-        return $this->release_date;
-    }
-
-    public function setReleaseDate(?DateTime $release_date): void
-    {
-        $this->release_date = $release_date;
-        $dateString = $release_date ? $release_date->format('Y-m-d') : null;
-        $this->Update("release_date", $dateString);
-    }
-
-    public function getTmdbId(): ?int
-    {
-        return $this->tmdb_id;
-    }
-
-    public function setTmdbId(?int $tmdb_id): void
-    {
-        $this->tmdb_id = $tmdb_id;
-        $this->Update("tmdb_id", $tmdb_id);
+    public function getDTO_Media(){
+        return new DTOMedia($this);
     }
 }
