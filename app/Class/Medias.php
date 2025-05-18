@@ -3,15 +3,20 @@
 namespace App\Class;
 
 use App\Class\Table;
+use App\Database\BD;
 use App\Models\Media;
+
+use App\Class\Movies;
 
 class Medias extends Table
 {
+
+
     /**
-     * Checks if a variable is an instance of Medias.
+     * Verifica si una variable es una instancia de Medias.
      *
-     * @param mixed $list Variable to check.
-     * @return bool True if instance of Medias, false otherwise.
+     * @param mixed $list Variable a verificar.
+     * @return bool Verdadero si es instancia de Medias, falso en caso contrario.
      */
     public static function isMediasList($list)
     {
@@ -40,9 +45,29 @@ class Medias extends Table
     }
 
     /**
-     * Adds a new Media object to the collection.
+     * Carga la colección de Movies para los elementos media en esta lista de Medias.
+     */
+    public function getMovies(): Movies
+    {
+        $allMovies = BD::$Movies;
+        $mediaIds = [];
+        foreach ($this as $media) {
+            if (isset($media->id)) {
+                $mediaIds[] = $media->id;
+            }
+        }
+        // Filtra las películas que tienen media_id en mediaIds
+        $filteredMovies = $allMovies->where(function ($movie) use ($mediaIds) {
+            return in_array($movie->media_id, $mediaIds);
+        });
+        return $filteredMovies;
+    }
+
+
+    /**
+     * Añade un nuevo objeto Media a la colección.
      *
-     * @param Media $media New media to add.
+     * @param Media $media Nuevo media a añadir.
      */
     public function add($media)
     {
@@ -50,10 +75,10 @@ class Medias extends Table
     }
 
     /**
-     * Returns a filtered list of media according to the callback.
+     * Devuelve una lista filtrada de media según el callback.
      *
-     * @param callable(Media): bool $callback Filter function.
-     * @return Medias New instance of Medias with filtered media.
+     * @param callable(Media): bool $callback Función de filtro.
+     * @return Medias Nueva instancia de Medias con media filtrado.
      */
     public function where(callable $callback): Medias
     {
@@ -61,10 +86,10 @@ class Medias extends Table
     }
 
     /**
-     * Returns the first media that matches the condition or null if none.
+     * Devuelve el primer media que coincide con la condición o null si no hay ninguno.
      *
-     * @param callable(Media): bool|null $callback Condition function.
-     * @return Media|null First media matching condition or null.
+     * @param callable(Media): bool|null $callback Función de condición.
+     * @return Media|null Primer media que coincide con la condición o null.
      */
     public function firstOrNull(?callable $callback = null): ?Media
     {
@@ -73,13 +98,31 @@ class Medias extends Table
     }
 
     /**
-     * Checks if any media matches the given condition.
+     * Verifica si algún media cumple con la condición dada.
      *
-     * @param callable(Media): bool|null $callback Condition function.
-     * @return bool True if any media matches, false otherwise.
+     * @param callable(Media): bool|null $callback Función de condición.
+     * @return bool Verdadero si algún media cumple, falso en caso contrario.
      */
     public function any(callable $callback = null): bool
     {
         return parent::any($callback);
+    }
+
+    /**
+     * Devuelve una nueva instancia de Medias que contiene solo objetos Media asociados con alguna Movie.
+     *
+     * @return Medias Instancia filtrada de Medias.
+     */
+    public function getMediasWithMovies(): Medias
+    {
+        $movieMediaIds = [];
+        foreach ($this->movies as $movie) {
+            if (isset($movie->media_id)) {
+                $movieMediaIds[] = $movie->media_id;
+            }
+        }
+        return $this->where(function ($media) use ($movieMediaIds) {
+            return in_array($media->id, $movieMediaIds);
+        });
     }
 }

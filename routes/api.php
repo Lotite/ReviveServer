@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthControler;
+use App\Http\Controllers\Api\MediaControler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -25,4 +26,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('/register', [AuthControler::class, "register"]);
 Route::post('/login', [AuthControler::class, "login"]);
 Route::post('/validateSession', [AuthControler::class, "validateSession"]);
-Route::post('/pruebas', []);
+Route::post('/medias', [MediaControler::class, "getMedias"]);

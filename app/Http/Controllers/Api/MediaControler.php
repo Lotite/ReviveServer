@@ -8,7 +8,9 @@ use Illuminate\Http\Request;
 
 class MediaControler extends Controller
 {
-    public function getMedias(){
-      return  Controller::responseMessage(success:true,data:["medias", BD::$Medias]);
-    }
+  public function getMedias()
+  {
+    
+    return Controller::responseMessage(success: true, data: ["movies"=> BD::$Medias->getMovies()->firstOrNull()->getMedia()]);
+  }
 }

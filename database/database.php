@@ -4,6 +4,7 @@ namespace App\Database;
 
 use App\Class\Devices;
 use App\Class\Medias;
+use App\Class\Movies;
 use App\Class\Users;
 use Exception;
 use PDO;
@@ -22,7 +23,7 @@ class BD
     private static $consexion = null;
 
     public static Users $Users;
-
+    public static Movies $Movies;
     public static Devices $Devices;
     public static Medias $Medias;
 
@@ -32,6 +33,7 @@ class BD
             "users" => [self::class, 'loadUsers'],
             "devices" => [self::class, 'loadDevices'],
             "media" => [self::class, 'loadMedias'],
+            "movies" => [self::class, 'loadMovies'],
         ];
 
         if ($table === "all") {
@@ -52,13 +54,15 @@ class BD
     {
         self::$Devices = new Devices(self::getData("devices"));
     }
-
-
-
     public static function loadMedias()
     {
         self::$Medias = new Medias(self::getData("media"));
     }
+    public static function loadMovies()
+    {
+        self::$Movies = new Movies(self::getData("movies"));
+    }
+
 
 
     /**

@@ -71,23 +71,9 @@ class User
      */
     public static function getByEmail(string $email): ?User
     {
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return null;
-        }
-
-        $result = BD::getData("users", "*", ["email" => $email]);
-        if (empty($result)) {
-            return null;
-        }
-
-        $userData = $result[0];
-        return new User(
-            $userData['id'],
-            $userData['name'],
-            $userData['email'],
-            $userData['password'],
-            new DateTime($userData['created_at'])
-        );
+        return BD::$Users->firstOrNull(function ($user) use ($email) {
+            return $user->getEmail() == $email;
+        });
     }
 
     /**

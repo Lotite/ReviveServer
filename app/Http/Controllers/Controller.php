@@ -32,7 +32,6 @@ class Controller
 
     /**
      * Obtiene el nombre del dispositivo a partir del User-Agent de la solicitud.
-     * Utiliza la librería Jenssegers\Agent para identificar plataforma y dispositivo.
      * Si no se puede identificar, devuelve "Desconocido".
      *
      * @param HttpRequest $request Objeto de la solicitud HTTP.
