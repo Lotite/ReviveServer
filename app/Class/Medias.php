@@ -46,20 +46,16 @@ class Medias extends Table
     /**
      * Carga la colección de Movies para los elementos media en esta lista de Medias.
      */
-    public function getMovies(): Movies
+    public function getMovies()
     {
-        $allMovies = BD::$Movies;
         $mediaIds = [];
         foreach ($this as $media) {
             if (isset($media->id)) {
                 $mediaIds[] = $media->id;
             }
         }
-        // Filtra las películas que tienen media_id en mediaIds
-        $filteredMovies = $allMovies->where(function ($movie) use ($mediaIds) {
-            return in_array($movie->media_id, $mediaIds);
-        });
-        return $filteredMovies;
+        $moviesData = BD::getDataIn("movies", "media_id", $mediaIds);
+        return $moviesData;
     }
 
     /**
@@ -67,18 +63,14 @@ class Medias extends Table
      */
     public function getSeries(): Series
     {
-        $allSeries = BD::$Series;
         $mediaIds = [];
         foreach ($this as $media) {
             if (isset($media->id)) {
                 $mediaIds[] = $media->id;
             }
         }
-        // Filtra las series que tienen media_id en mediaIds
-        $filteredSeries = $allSeries->where(function ($serie) use ($mediaIds) {
-            return in_array($serie->media_id, $mediaIds);
-        });
-        return $filteredSeries;
+        $seriesData = BD::getDataIn("series", "media_id", $mediaIds);
+        return new Series($seriesData);
     }
 
 
@@ -143,6 +135,31 @@ class Medias extends Table
             return in_array($media->id, $movieMediaIds);
         });
     }
+
+public static function getRandomMediaWhitGenero($genero, $cantidad, $tiposMedia = ['movie', 'serie'])
+    {
+        // Construir consulta SQL con BD::getDataWithQuery para filtrar por genero y tipo de media, orden aleatorio y límite
+        if (is_string($tiposMedia)) {
+            $tiposList = "('" . $tiposMedia . "')";
+        } else  {
+            $tiposList = "('" . implode("', '", $tiposMedia) . "')";
+        }
+
+        $sql = "SELECT m.*
+                FROM media m JOIN generomedia gm ON m.id = gm.media 
+                WHERE gm.genero = $genero 
+                AND m.type IN $tiposList
+                ORDER BY RAND() LIMIT $cantidad;";
+
+        $mediasInfo = BD::getDataWithQuery($sql);
+
+        if (empty($mediasInfo)) {
+            return new Medias();
+        }
+
+        return new Medias($mediasInfo);
+    }
+
 
     /**
      * Devuelve una lista de objetos DTO que representan los medias en esta colección.

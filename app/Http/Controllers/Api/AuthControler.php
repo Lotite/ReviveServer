@@ -21,13 +21,13 @@ class AuthControler extends Controller
     }
 
 
-    public function firstUser(Request $request)
-    {
-        return Controller::ControlerException($request, function () {
-            $user = BD::$Users->firstOrNull();
-            return Controller::responseMessage(true, 'Success', ["user", $user], 200);
-        });
-    }
+    // public function firstUser(Request $request)
+    // {
+    //     return Controller::ControlerException($request, function () {
+    //         $user = BD::$Users->firstOrNull();
+    //         return Controller::responseMessage(true, 'Success', ["user", $user], 200);
+    //     });
+    // }
 
 
 

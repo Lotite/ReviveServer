@@ -15,7 +15,6 @@ use PDO;
 
 
 
-BD::loadData();
 class BD
 {
     private static $host = 'localhost';
@@ -23,83 +22,24 @@ class BD
     private static $username = 'root';
     private static $password = '';
 
+    /**
+     * Instancia de la conexión PDO.
+     * 
+     * @var PDO|null
+     */
     private static $consexion = null;
 
-    public static Users $Users;
-    public static Movies $Movies;
-    public static Devices $Devices;
-    public static Medias $Medias;
-    public static Series $Series;
-    public static Generos $Generos;
-    public static GenerosMedia $GeneroMedia;
-
-    public static function loadData(string $table = "all")
-    {
-        $function = [
-        "users" => [self::class, 'loadUsers'],
-        "devices" => [self::class, 'loadDevices'],
-        "media" => [self::class, 'loadMedias'],
-        "movies" => [self::class, 'loadMovies'],
-        "series" => [self::class, 'loadSeries'],
-        "generos" => [self::class, 'loadGeneros'],
-        "generomedia" => [self::class, 'loadGeneroMedia'],
-        ];
-
-        if ($table === "all") {
-            foreach ($function as $callback) {
-                call_user_func($callback);
-            }
-            self::loadGeneroMedia();
-        } elseif (isset($function[$table])) {
-            call_user_func($function[$table]);
-        }
-    }
-
-    public static function loadUsers()
-    {
-        self::$Users = new Users(self::getData("users"));
-    }
-
-    public static function loadDevices()
-    {
-        self::$Devices = new Devices(self::getData("devices"));
-    }
-    public static function loadMedias()
-    {
-        self::$Medias = new Medias(self::getData("media"));
-    }
-    public static function loadMovies()
-    {
-        self::$Movies = new Movies(self::getData("movies"));
-    }
-
-    public static function loadSeries()
-    {
-        self::$Series = new Series(self::getData("series"));
-    }
-
-    public static function loadGeneros()
-    {
-        self::$Generos = new Generos(self::getData("generos"));
-    }
-
-    public static function loadGeneroMedia()
-    {
-        self::$GeneroMedia = new GenerosMedia(self::getData("generomedia"));
-    }
-
-
-
     /**
-     * Abre la conexión a la base de datos.
+     * Abre la conexión a la base de datos si no está ya establecida.
      * 
-     * Verifica si la conexión ya está establecida, si no, la crea utilizando PDO.
+     * Crea una nueva instancia PDO para la conexión a la base de datos MySQL.
+     * Si la conexión falla, imprime un mensaje JSON y termina la ejecución.
      * 
      * @return void
      */
     private static function openConexion()
     {
-        if (self::$consexion == null) {
+        if (self::$consexion === null) {
             self::$consexion = new PDO("mysql:host=" . self::$host . ";dbname=" . self::$dbname, self::$username, self::$password);
             if (!self::$consexion) {
                 echo '{"estado":"sin conexion"}';
@@ -108,28 +48,24 @@ class BD
         }
     }
 
-
-
-
     /**
-     * Cierra la conexión a la base de datos.
+     * Cierra la conexión a la base de datos si está abierta.
      * 
-     * Verifica si la conexión está establecida, si es así, la cierra.
+     * Establece la instancia de conexión a null para liberar recursos.
      * 
      * @return void
      */
     public static function closeConsexion()
     {
-        if (self::$consexion != null) {
-            //unset(self::$consexion);
+        if (self::$consexion !== null) {
             self::$consexion = null;
         }
     }
 
     /**
-     * Convierte las claves de un arreglo en una cadena separada por comas.
+     * Convierte las claves de un arreglo asociativo en una cadena separada por comas.
      * 
-     * @param array $array Arreglo con las claves a convertir.
+     * @param array $array Arreglo asociativo cuyas claves se convertirán.
      * @return string Cadena con las claves separadas por comas.
      */
     private static function implodeKeys(array $array): string
@@ -149,12 +85,14 @@ class BD
     }
 
     /**
-     * Crea una cadena con interrogantes separados por comas, según la cantidad especificada.
+     * Crea una cadena con signos de interrogación separados por comas, según la cantidad especificada.
      * 
-     * @param int $number Cantidad de interrogantes a crear.
-     * @return string Cadena con los interrogantes separados por comas.
+     * Esta cadena se utiliza para consultas preparadas con parámetros.
+     * 
+     * @param int $number Cantidad de signos de interrogación a crear.
+     * @return string Cadena con signos de interrogación separados por comas.
      */
-    private static function implodeInterogation(int $number)
+    public static function implodeInterogation(int $number): string
     {
         return implode(",", array_fill(0, $number, "?"));
     }
@@ -162,24 +100,28 @@ class BD
     /**
      * Crea una cadena con la condición WHERE para una consulta SQL.
      * 
-     * @param array $where Arreglo con las columnas y valores para la condición.
-     * @return string Cadena con la condición WHERE.
+     * Genera una cadena con condiciones del tipo "columna = ?" unidas por " AND ".
+     * 
+     * @param array $where Arreglo asociativo con columnas y valores para la condición.
+     * @return string Cadena con la condición WHERE para la consulta SQL.
      */
-    private static function strWhere(array $where)
+    private static function strWhere(array $where): string
     {
         $columns = array_keys($where);
-        return implode("and", array_map(function ($column) {
+        return implode(" AND ", array_map(function ($column) {
             return "$column = ?";
         }, $columns));
     }
 
-
-
-
-
-
-
-
+    /**
+     * Ejecuta una transacción en la base de datos.
+     * 
+     * Abre la conexión, inicia la transacción, ejecuta el callback, y confirma o revierte la transacción.
+     * Finalmente cierra la conexión.
+     * 
+     * @param callable $callback Función que contiene las operaciones a ejecutar dentro de la transacción.
+     * @return mixed Resultado devuelto por el callback o un arreglo vacío en caso de error.
+     */
     public static function starTransaction(callable $callback)
     {
         self::openConexion();
@@ -190,26 +132,29 @@ class BD
             return $result;
         } catch (Exception $e) {
             self::$consexion->rollBack();
-            return null;
+            return [];
         } finally {
             self::closeConsexion();
         }
     }
-    /**
-     * Devuelve los datos solicitados de la base de datos.
-     * @param string $table la tabla a extraer los datos.
-     * @param string[]|string $data array o string que contiene los datos a solicitar.
-     * @param string[] $condition  array asociativa que contiene las columnas y los valores de la condicion.
-     * @return array array asociativo con los resultados de la consulta.
-     */
 
-    public static function getData(string $table, $data = "*", ?array $condition = null): array
+    /**
+     * Devuelve los datos solicitados de una tabla de la base de datos.
+     * 
+     * @param string $table Nombre de la tabla.
+     * @param string[]|string $data Columnas a seleccionar o "*" para todas.
+     * @param array|null $condition Condiciones para la cláusula WHERE (opcional).
+     * @param int|null $max Parámetro no utilizado actualmente (opcional).
+     * @param int|null $min Parámetro no utilizado actualmente (opcional).
+     * @return array Arreglo asociativo con los resultados de la consulta.
+     */
+    public static function getData(string $table, $data = "*", ?array $condition = null, ?int $max = null, ?int $min = null): array
     {
         if (is_array($data)) {
             $data = self::implodeValues($data);
         }
 
-        return self::starTransaction(function () use ($table, $data, $condition) {
+        return self::starTransaction(function () use ($table, $data, $condition, $max, $min) {
             if (empty($condition)) {
                 $prepare = self::$consexion->prepare("SELECT $data FROM $table");
                 $prepare->execute();
@@ -224,13 +169,28 @@ class BD
     }
 
     /**
-     * Devuelve la primera fila de los datos solicitados de la base de datos.
+     * Ejecuta una consulta SQL personalizada con parámetros y devuelve los resultados.
      * 
-     * @param string $table La tabla a extraer los datos.
-     * @param string[]|string $data array o string que contiene los datos a solicitar.
-     * @param array $condition Arreglo asociativo que contiene las columnas y los valores de la condición.
+     * @param string $query Consulta SQL a ejecutar.
+     * @param array $params Parámetros para la consulta preparada.
+     * @return array Arreglo asociativo con los resultados de la consulta.
+     */
+    public static function getDataWithQuery(string $query, array $params = []): array
+    {
+        return self::starTransaction(function () use ($query, $params) {
+            $prepare = self::$consexion->prepare($query);
+            $prepare->execute($params);
+            return $prepare->fetchAll(PDO::FETCH_ASSOC);
+        });
+    }
+
+    /**
+     * Devuelve la primera fila de los datos solicitados de una tabla.
      * 
-     * @return array|bool La primera fila de los resultados de la consulta, o false si no hay resultados.
+     * @param string $table Nombre de la tabla.
+     * @param string[]|string $data Columnas a seleccionar o "*" para todas.
+     * @param array $condition Condiciones para la cláusula WHERE.
+     * @return array|bool La primera fila de resultados o false si no hay resultados.
      */
     public static function getFirstRow(string $table, array|string $data, array $condition): array|bool
     {
@@ -238,34 +198,62 @@ class BD
         if (!empty($result)) {
             return $result[0];
         } else {
-            return false; //No se encontraron resultados
+            return false;
         }
     }
 
+    /**
+     * Devuelve los datos de una tabla donde el valor de una columna está dentro de un conjunto dado.
+     * 
+     * @param string $table Nombre de la tabla.
+     * @param string $column Columna para la condición IN.
+     * @param array $values Valores para la condición IN.
+     * @param string[]|string $data Columnas a seleccionar o "*" para todas.
+     * @return array Arreglo asociativo con los resultados de la consulta.
+     */
+    public static function getDataIn(string $table, string $column, array $values, $data = "*"): array
+    {
+        if (is_array($data)) {
+            $data = self::implodeValues($data);
+        }
 
+        if (empty($values)) {
+            return [];
+        }
 
+        $result = self::starTransaction(function () use ($table, $column, $values, $data) {
+            $placeholders = self::implodeInterogation(count($values));
+            $sql = "SELECT $data FROM $table WHERE $column IN ($placeholders)";
+            return self::getDataWithQuery($sql, $values);
+        });
 
+        return $result;
+    }
 
     /**
-     * Actualiza un valor en una tabla.
-     * @param string $column La columna a actualizar.
-     * @param mixed $value El nuevo valor.
-     * @param string $table La tabla donde se realizará la actualización.
+     * Actualiza un valor en una columna específica de una tabla.
+     * 
+     * @param string $table Nombre de la tabla.
+     * @param string $column Columna a actualizar.
+     * @param string $value Nuevo valor para la columna.
+     * @param int $id Identificador del registro a actualizar.
      * @return void
      */
-
-
-
-
-    public static function UpdateTable(string $table, string $column, string $value, int $id)
+    public static function UpdateTable(string $table, string $column, string $value, int $id): void
     {
         $query = "UPDATE $table SET $column = ? WHERE id = ?";
         $params = [$value, $id];
         self::execute($query, $params);
-        self::loadData($table);
     }
 
-
+    /**
+     * Actualiza múltiples columnas en una tabla para un registro específico.
+     * 
+     * @param string $table Nombre de la tabla.
+     * @param array $columnValues Arreglo asociativo con columnas y sus nuevos valores.
+     * @param int $id Identificador del registro a actualizar.
+     * @return bool True si la actualización fue exitosa.
+     */
     public static function UpdateMultipleTable(string $table, array $columnValues, int $id): bool
     {
         $setClauses = [];
@@ -277,10 +265,16 @@ class BD
         $query = "UPDATE $table SET " . implode(", ", $setClauses) . " WHERE id = ?";
         $params[] = $id;
         self::execute($query, $params);
-        self::loadData($table);
         return true;
     }
 
+    /**
+     * Ejecuta una consulta SQL con parámetros.
+     * 
+     * @param string $query Consulta SQL a ejecutar.
+     * @param array $params Parámetros para la consulta preparada.
+     * @return bool True si la ejecución fue exitosa.
+     */
     private static function execute(string $query, array $params): bool
     {
         return true === self::starTransaction(function () use ($query, $params) {
@@ -290,46 +284,55 @@ class BD
         });
     }
 
-
     /**
-     * modifica una columna en una tabla;
-     * @param string[] $datos una array asociativa con las columnas y susvalores a añadir
-     * @param string $tabla la cual se añadira los valores
-     * @return void
+     * Inserta un nuevo registro en una tabla.
+     * 
+     * @param string $table Nombre de la tabla.
+     * @param array $datos Arreglo asociativo con columnas y valores a insertar.
+     * @return bool True si la inserción fue exitosa.
      */
-
     public static function InsertIntoTable(string $table, array $datos): bool
     {
-
         $columns = "( " . self::implodeKeys($datos) . " )";
         $values = "( " . self::implodeInterogation(count($datos)) . " )";
         $query = "INSERT INTO $table $columns VALUES $values";
         $params = array_values($datos);
         $result = self::execute($query, $params);
-        // self::loadData($table);
         return $result;
     }
+
     /**
-     * Esta funcion verifica si hay un valor coincidente en la tabla
-     * @param string $column columna a validar
-     * @param mixed $value valor a validar
-     * @param string $columna a validar
+     * Verifica si existe un valor en una columna de una tabla.
+     * 
+     * @param string $column Columna a validar.
+     * @param mixed $value Valor a buscar en la columna.
+     * @param string $table Nombre de la tabla.
+     * @return bool True si el valor existe, false en caso contrario o en caso de error.
      */
-    public static function exist(string $column, $value, string $table)
+    public static function exist(string $column, $value, string $table): bool
     {
         self::openConexion();
         try {
-            $prepare = self::$consexion->prepare("SELECT $column from $table where $column = ?");
+            $prepare = self::$consexion->prepare("SELECT $column FROM $table WHERE $column = ?");
             $prepare->execute([$value]);
             $resultado = $prepare->rowCount() > 0;
             return $resultado;
         } catch (Exception $e) {
-            // devolverError("Error en verificar tus datos");
+            // En caso de error, se asume que el valor existe para evitar inconsistencias.
             return true;
         } finally {
             self::closeConsexion();
         }
     }
+
+    /**
+     * Elimina un registro de una tabla según su clave primaria.
+     * 
+     * @param string $table Nombre de la tabla.
+     * @param string $primaryKey Nombre de la columna clave primaria.
+     * @param int $id Valor de la clave primaria del registro a eliminar.
+     * @return bool True si la eliminación fue exitosa.
+     */
     public static function DeleteFromTable(string $table, string $primaryKey, int $id): bool
     {
         return self::starTransaction(function () use ($table, $primaryKey, $id) {
@@ -337,6 +340,4 @@ class BD
             return self::execute($query, [$id]);
         });
     }
-
-
 }

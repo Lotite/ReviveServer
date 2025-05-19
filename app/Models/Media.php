@@ -51,26 +51,16 @@ class Media
      */
     public function getGeneros(): Generos
     {
-        // Obtener todos los generos
-        $allGeneros = BD::$Generos;
+        $generoMediaRows = BD::getData("generomedia", "*", ["media_id" => $this->id]);
 
-        // Obtener los ids de generos relacionados con este media desde la tabla generomedia
-        $generoMediaRows = BD::$GeneroMedia->where(function ($row) {
-            return $row->media_id === $this->id;
-        });
-
-        // Extraer los ids de genero
         $generoIds = [];
         foreach ($generoMediaRows as $row) {
-            $generoIds[] = $row->genero_id;
+            $generoIds[] = $row['genero_id'];
         }
 
-        // Filtrar los generos que coinciden con los ids
-        $relatedGeneros = $allGeneros->where(function (Genero $genero) use ($generoIds) {
-            return in_array($genero->id, $generoIds);
-        });
+        $generosData = BD::getDataIn("generos", "id", $generoIds);
 
-        return $relatedGeneros ?? [];
+        return new Generos($generosData);
     }
 
     /**
@@ -81,9 +71,8 @@ class Media
      */
     public function isOfGenero(int $generoId): bool
     {
-        return BD::$GeneroMedia->any(function ($row) use ($generoId) {
-            return $row->media_id === $this->id && $row->genero_id === $generoId;
-        });
+        $generoMediaRows = BD::getData("generomedia", "*", ["media_id" => $this->id, "genero_id" => $generoId]);
+        return !empty($generoMediaRows);
     }
 
     public function getDTO_Media(){

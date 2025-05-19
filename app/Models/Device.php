@@ -91,12 +91,12 @@ class Device
      */
     public static function getByToken(string $token): ?Device
     {
-        $result = BD::getData("devices", "*", ["token" => $token]);
-        if (empty($result)) {
+        $deviceData = BD::getFirstRow("devices", "*", ["token" => $token]);
+        if(!$deviceData){
             return null;
         }
 
-        $deviceData = $result[0];
+    
         $lastActiveTimestamp = $deviceData['last_active_timestamp'] ? new DateTime($deviceData['last_active_timestamp']) : null;
         $registerAt = $deviceData['register_at'] ? new DateTime($deviceData['register_at']) : null;
 
@@ -143,7 +143,11 @@ class Device
      */
     public static function getDevice(int $id): ?Device
     {
-        return BD::$Devices->firstOrNull(fn($device) => $device->id === $id);
+        $deviceData = BD::getFirstRow("devices", "*", ["id" => $id]);
+        if (!$deviceData) {
+            return null;
+        }
+        return self::NewDevice($deviceData);
     }
 
     // Getters y Setters mejorados

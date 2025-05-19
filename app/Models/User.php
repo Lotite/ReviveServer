@@ -71,10 +71,10 @@ class User
      */
     public static function getByEmail(string $email): ?User
     {
-        return BD::$Users->firstOrNull(function ($user) use ($email) {
-            return $user->getEmail() == $email;
-        });
+        return self::NewUser(BD::getFirstRow("users", "*", ["email" => $email]));
+
     }
+
 
     /**
      * Intenta autenticar un usuario con email y contraseña.

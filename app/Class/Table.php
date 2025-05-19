@@ -106,4 +106,6 @@ class Table extends ArrayObject
         if($callback==null) $callback = function () {return $this->count() > 0; };
         return $this->firstOrNull($callback) != null;
     }
+
+    
 }

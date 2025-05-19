@@ -38,8 +38,10 @@ class Movie
      */
     public function getMedia(): ?Media
     {
-        return BD::$Medias->firstOrNull(function ($media) {
-            return $media->id === $this->media_id;
-        });
+        $mediaData = BD::getFirstRow("media", "*", ["id" => $this->media_id]);
+        if (!$mediaData) {
+            return null;
+        }
+        return Media::NewMedia($mediaData);
     }
 }

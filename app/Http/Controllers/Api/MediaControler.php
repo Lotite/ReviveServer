@@ -2,43 +2,46 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Class\Generos;
+use App\Class\Medias;
 use App\Database\BD;
 use App\Http\Controllers\Controller;
+use App\Models\Media;
 use Illuminate\Http\Request;
 
 class MediaControler extends Controller
 {
-  public function getMedias()
-  {
-   
-
-    return Controller::responseMessage(success: true, data: BD::$Medias->firstOrNull());
-  }
+ 
 
   public function home()
   {
-    $allGeneros = BD::$Generos;
-    $generosArray = iterator_to_array($allGeneros);
-    shuffle($generosArray);
-    $selectedGeneros = array_slice($generosArray, 0, 5);
+    $recommendations = $this->recommendate();
+    return Controller::responseMessage(success: true, data: $recommendations);
+  }
 
-    $result = [];
+  public function movies()
+  {
+    $recommendations = $this->recommendate("movie");
+    return Controller::responseMessage(success: true, data: $recommendations);
+  }
 
-    foreach ($selectedGeneros as $genero) {
-      $mediasOfGenero = BD::$Medias->where(function ($media) use ($genero) {
-        return $media->isOfGenero($genero->id);
-      })->getDTO_List();
+  public function series()
+  {
+    $recommendations = $this->recommendate("serie");
+    return Controller::responseMessage(success: true, data: $recommendations);
+  }
 
-      $mediasArray = iterator_to_array($mediasOfGenero);
-      shuffle($mediasArray);
-      $selectedMedias = array_slice($mediasArray, 0, 8);
+  public  function recommendate($tipo = ['movie', 'serie']){
+    $generos = Generos::getRandomGeneros(6);
+    $recommendations = [];
 
-      $result[] = [
+    foreach ($generos as $genero) {
+      $medias = Medias::getRandomMediaWhitGenero($genero->id, 8,$tipo);
+      $recommendations[] = [
         'genero' => $genero,
-        'medias' => $selectedMedias,
+        'medias' => $medias
       ];
     }
-
-    return Controller::responseMessage(success: true, data: $result);
+    return $recommendations;
   }
 }

@@ -3,6 +3,7 @@
 namespace App\Class;
 
 use App\Class\Table;
+use App\Database\BD;
 use App\Models\Genero;
 
 class Generos extends Table
@@ -81,5 +82,29 @@ class Generos extends Table
     public function any(callable $callback = null): bool
     {
         return parent::any($callback);
+    }
+
+    /**
+     * Obtiene todos los generos desde la base de datos.
+     *
+     * @return self Nueva instancia de Generos con todos los generos obtenidos.
+     */
+    public static function getGeneros(): self
+    {
+        return new self(BD::getData("generos"));
+    }
+
+    /**
+     * Obtiene una lista aleatoria de generos desde la base de datos.
+     *
+     * @param int $maxGeneros Número máximo de generos a obtener. Por defecto es 5.
+     * @return self Nueva instancia de Generos con los generos aleatorios obtenidos.
+     */
+    public static function getRandomGeneros(int $maxGeneros = 5): self
+    {
+        $sql = "SELECT * FROM generos ORDER BY RAND() LIMIT $maxGeneros";
+        $params = [$maxGeneros];
+        $generosData = BD::getDataWithQuery($sql);
+        return new self($generosData);
     }
 }
