@@ -132,7 +132,7 @@ class BD
             return $result;
         } catch (Exception $e) {
             self::$consexion->rollBack();
-            return [];
+            return ["error"=>$e];
         } finally {
             self::closeConsexion();
         }
@@ -211,23 +211,31 @@ class BD
      * @param string[]|string $data Columnas a seleccionar o "*" para todas.
      * @return array Arreglo asociativo con los resultados de la consulta.
      */
-    public static function getDataIn(string $table, string $column, array $values, $data = "*"): array
+    public static function getDataIn(string $table, string $column, array $values, $data = "*"): ?array
     {
         if (is_array($data)) {
             $data = self::implodeValues($data);
         }
 
         if (empty($values)) {
-            return [];
+            return null;
         }
 
-        $result = self::starTransaction(function () use ($table, $column, $values, $data) {
-            $placeholders = self::implodeInterogation(count($values));
-            $sql = "SELECT $data FROM $table WHERE $column IN ($placeholders)";
-            return self::getDataWithQuery($sql, $values);
-        });
+        $placeholders = implode(",", array_map(function ($value) {
+            if (is_numeric($value)) {
+                return $value;
+            } else {
+                return "'" . addslashes($value) . "'";
+            }
+        }, $values));
 
-        return $result;
+        $sql = "SELECT $data FROM $table WHERE $column IN ($placeholders)";
+
+        return self::starTransaction(function () use ($sql) {
+            $prepare = self::$consexion->prepare($sql);
+            $prepare->execute();
+            return $prepare->fetchAll(PDO::FETCH_ASSOC);
+        });
     }
 
     /**

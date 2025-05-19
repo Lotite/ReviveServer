@@ -26,4 +26,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('/register', [AuthControler::class, "register"]);
 Route::post('/login', [AuthControler::class, "login"]);
 Route::post('/validateSession', [AuthControler::class, "validateSession"]);
-Route::post('/home', [MediaControler::class, "movies"]);
+Route::post('/home', [MediaControler::class, "home"]);
+Route::post('/movies', [MediaControler::class, "movies"]);
+Route::post('/series', [MediaControler::class, "series"]);

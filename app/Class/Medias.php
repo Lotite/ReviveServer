@@ -136,12 +136,12 @@ class Medias extends Table
         });
     }
 
-public static function getRandomMediaWhitGenero($genero, $cantidad, $tiposMedia = ['movie', 'serie'])
+    public static function getRandomMediaWhitGenero($genero, $cantidad, $tiposMedia = ['movie', 'serie'])
     {
-        // Construir consulta SQL con BD::getDataWithQuery para filtrar por genero y tipo de media, orden aleatorio y límite
+
         if (is_string($tiposMedia)) {
             $tiposList = "('" . $tiposMedia . "')";
-        } else  {
+        } else {
             $tiposList = "('" . implode("', '", $tiposMedia) . "')";
         }
 
@@ -157,7 +157,7 @@ public static function getRandomMediaWhitGenero($genero, $cantidad, $tiposMedia 
             return new Medias();
         }
 
-        return new Medias($mediasInfo);
+        return (new Medias($mediasInfo))->getDTO_List();
     }
 
 

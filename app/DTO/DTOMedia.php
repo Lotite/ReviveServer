@@ -11,7 +11,7 @@ class DTOMedia
     public string $portada;
     public string $banner;
     public string $description;
-    public int $resena;
+    public int $reseña;
     public string $date;
     public int $number;
     public string $type; // "movie" | "serie" | "season" | "episodie"
@@ -20,7 +20,7 @@ class DTOMedia
     public ?array $generos;
     public ?array $reparto;
     public ?string $director;
-
+    //https://image.tmdb.org/t/p/original/
     public function __construct(Media $media)
     {
         $this->id = $media->id;
@@ -29,14 +29,18 @@ class DTOMedia
         $this->portada = "https://picsum.photos/400/100?random=" . $idImg;
         $this->banner = "https://picsum.photos/1000/400?random=" . $idImg;
         $this->description = $media->descripcion;
-        $this->resena = 5;
+        $this->reseña = 5;
         $this->date = $media->release_date;
-        $this->number =  0;
+        $this->number = 0;
         $this->type = $media->type;
         $this->duracion = 100;
         $this->clasificacion = 20;
-        $this->generos = $media->getGeneros() ?? [];
-        $this->reparto =  [];
-        $this->director =  "";
+        $this->generos = $media->getGenerosName() ;
+        $this->reparto = $media->getRepartoName(true);
+        $this->director = $media->getDirector();
+        
+        
+
+
     }
 }
