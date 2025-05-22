@@ -66,12 +66,13 @@ class Controller
      * @param int $status Código HTTP de la respuesta.
      * @return \Illuminate\Http\JsonResponse Respuesta JSON con los datos proporcionados.
      */
-    public static function responseMessage(bool $success = true, string $message = "", $data = [], int $status = 200)
+    public static function responseMessage(bool $success = true, string $message = "", $data = [],$session = [], int $status = 200)
     {
         $response = response()->json([
             "success" => $success,
             "message" => $message,
-            "data" => $data
+            "data" => $data,
+            "session" => $session
         ], $status);
 
         DataManager::sendAllCookies($response);

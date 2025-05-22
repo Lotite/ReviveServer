@@ -73,6 +73,8 @@ class Users extends Table
         return $result;
     }
 
+    
+
     /**
      * Verifica si algún usuario cumple la condición dada.
      *

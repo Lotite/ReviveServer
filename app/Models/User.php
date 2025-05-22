@@ -63,6 +63,7 @@ class User
         return is_int($idUser) && BD::exist("id", $idUser, "users");
     }
 
+
     /**
      * Obtiene un usuario por su correo electrónico.
      *
@@ -71,8 +72,25 @@ class User
      */
     public static function getByEmail(string $email): ?User
     {
-        return self::NewUser(BD::getFirstRow("users", "*", ["email" => $email]));
+        $user = BD::getFirstRow("users", "*", ["email" => $email]);
+        if($user)
+        return self::NewUser($user);
+        return null;
+    }
 
+    /**
+     * Obtiene un usuario por su ID.
+     *
+     * @param int $id ID del usuario a buscar.
+     * @return User|null Instancia de User o null si no se encuentra.
+     */
+    public static function getUser(int $id): ?User
+    {
+        $user = BD::getFirstRow("users", "*", ["id" => $id]);
+        if ($user) {
+            return self::NewUser($user);
+        }
+        return null;
     }
 
 
@@ -97,6 +115,19 @@ class User
     }
 
     /**
+     * Elimina un usuario por su ID.
+     *
+     * @param int $userId ID del usuario a eliminar.
+     * @return bool True si se eliminó correctamente, false en caso contrario.
+     */
+    public static function deleteUserById(int $userId)
+    {
+        return BD::DeleteFromTable("users", "id", $userId);
+    }
+
+
+
+    /**
      * Añade un dispositivo asociado al usuario.
      *
      * @param string $deviceName Nombre del dispositivo.
@@ -114,6 +145,9 @@ class User
             $device->rememberDevice();
         }
     }
+
+
+   
 
     /**
      * Obtiene el ID del usuario.

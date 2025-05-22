@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Database\BD;
 use DateTime;
+use DateTimeImmutable;
+use DateTimeZone;
 
 class Device
 {
@@ -13,22 +15,28 @@ class Device
 
     private ?string $device_name;
 
-    private ?DateTime $last_active_timestamp;
+    private ?string $last_active_timestamp;
 
     private ?string $token;
 
-    private ?DateTime $register_at;
+    private ?string $register_at;
 
 
-    public function __construct(?int $id = null, ?int $user_id, ?string $device_name, ?DateTime $last_active_timestamp = null, $token = null, ?DateTime $register_at = null)
+
+    public function __construct(?int $id = null, ?int $user_id, ?string $device_name, ?string $last_active_timestamp = null, $token = null, ?string $register_at = null)
     {
         $this->id = $id;
         $this->user_id = $user_id;
         $this->device_name = $device_name;
-        $this->last_active_timestamp = $last_active_timestamp ?? new DateTime();
         $this->token = $token ?? bin2hex(random_bytes(32));
-        $this->register_at = $register_at ?? new DateTime();
+
+        $timestamp = microtime(true);
+        $fecha_actual = gmdate('Y-m-d H:i:s', $timestamp);
+        
+        $this->last_active_timestamp = $last_active_timestamp ?? $fecha_actual;
+        $this->register_at = $register_at ?? $fecha_actual;
     }
+
 
     /**
      * Crea una nueva instancia de Device a partir de un array de datos.
@@ -38,15 +46,14 @@ class Device
      */
     public static function NewDevice(array $data): Device
     {
-        $lastActive = isset($data["last_active_timestamp"]) ? DateTime::createFromFormat('Y-m-d H:i:s', $data["last_active_timestamp"]) : null;
-        $register_at = isset($data["register_at"]) ? DateTime::createFromFormat('Y-m-d H:i:s', $data["register_at"]) : null;
+
         return new Device(
-            $data['id'],
-            $data['user_id'],
-            $data['device_name'],
-            $lastActive,
-            $data['token'],
-            $register_at
+            $data['id'] ?? null,
+            $data['user_id'] ?? null,
+            $data['device_name'] ?? null,
+            $data["last_active_timestamp"] ?? null,
+            $data['token'] ?? null,
+            $data["register_at"] ?? null
         );
     }
 
@@ -61,9 +68,9 @@ class Device
         $data = [
             "user_id" => $device->user_id,
             "device_name" => $device->device_name,
-            "last_active_timestamp" => $device->last_active_timestamp->format('Y-m-d H:i:s'),
+            "last_active_timestamp" => $device->last_active_timestamp,
             "token" => $device->token,
-            "register_at" => $device->register_at->format('Y-m-d H:i:s'),
+            "register_at" => $device->register_at,
         ];
 
         return BD::InsertIntoTable("devices", $data);
@@ -92,21 +99,17 @@ class Device
     public static function getByToken(string $token): ?Device
     {
         $deviceData = BD::getFirstRow("devices", "*", ["token" => $token]);
-        if(!$deviceData){
+        if (!$deviceData) {
             return null;
         }
-
-    
-        $lastActiveTimestamp = $deviceData['last_active_timestamp'] ? new DateTime($deviceData['last_active_timestamp']) : null;
-        $registerAt = $deviceData['register_at'] ? new DateTime($deviceData['register_at']) : null;
 
         return new Device(
             $deviceData['id'],
             $deviceData['user_id'],
             $deviceData['device_name'],
-            $lastActiveTimestamp,
+            $deviceData['last_active_timestamp'],
             $deviceData['token'],
-            $registerAt
+            $deviceData['register_at']
         );
     }
 
@@ -149,6 +152,8 @@ class Device
         }
         return self::NewDevice($deviceData);
     }
+
+
 
     // Getters y Setters mejorados
 
@@ -220,7 +225,7 @@ class Device
      *
      * @return DateTime|null Timestamp de la última actividad.
      */
-    public function getLastActiveTimestamp(): ?DateTime
+    public function getLastActiveTimestamp(): ?string
     {
         return $this->last_active_timestamp;
     }
@@ -263,7 +268,7 @@ class Device
      *
      * @return DateTime|null Timestamp de registro.
      */
-    public function getRegisterAt(): ?DateTime
+    public function getRegisterAt(): ?string
     {
         return $this->register_at;
     }
@@ -292,6 +297,60 @@ class Device
             return null;
         }
         return $device->user_id;
+    }
+
+    /**
+     * Elimina todos los dispositivos asociados a un usuario excepto el dispositivo con el token especificado.
+     *
+     * @param int $userId ID del usuario.
+     * @param string $exceptToken Token del dispositivo que no debe eliminarse.
+     * @return bool Resultado de la operación.
+     */
+    public static function deleteAllExcept(string $userId, string $exceptToken): bool
+    {
+        return BD::execute(
+            "DELETE FROM devices WHERE user_id = ? AND token != ?",
+            [$userId, $exceptToken]
+        );
+    }
+
+    /**
+     * Obtiene todos los dispositivos asociados a un usuario.
+     *
+     * @param int $userId ID del usuario.
+     * @return Device[] Array de instancias de Device.
+     */
+    public static function getDevicesByUserId(int $userId): array
+    {
+        $devicesData = BD::getData("devices", "*", ["user_id" => $userId]);
+        $devices = [];
+        foreach ($devicesData as $deviceData) {
+            $device = self::NewDevice($deviceData);
+            $devices[] = $device;
+        }
+        return $devices;
+    }
+
+    /**
+     * Elimina un dispositivo dado su ID y el ID del usuario propietario.
+     *
+     * @param int $userId ID del usuario.
+     * @param int $deviceId ID del dispositivo a eliminar.
+     * @return bool True si se eliminó correctamente, false en caso contrario.
+     */
+    public static function deleteDevice(int $userId, int $deviceId): bool
+    {
+        // Verificar que el dispositivo pertenece al usuario
+        $device = self::getDevice($deviceId);
+        if ($device === null || $device->getUserId() !== $userId) {
+            return false;
+        }
+
+        // Ejecutar la eliminación
+        return BD::execute(
+            "DELETE FROM devices WHERE id = ? AND user_id = ?",
+            [$deviceId, $userId]
+        );
     }
 }
 

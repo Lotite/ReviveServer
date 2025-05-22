@@ -111,7 +111,7 @@ class DataManager
     {
         $expireAt = time() + (self::$cookieTime * 60);
         foreach (self::$cookies as $name => $value) {
-            $cookie = new SymfonyCookie($name, $value, $expireAt, '/', "http://192.168.1.141");
+            $cookie = new SymfonyCookie($name, $value, $expireAt, '/');
             $response->headers->setCookie($cookie);
         }
         return $response;
@@ -156,5 +156,31 @@ class DataManager
             }
         }
         return $value;
+    }
+
+    /**
+     * Elimina todos los datos de la sesión.
+     *
+     * @return void
+     */
+    public static function removeAllSessionData(): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION = [];
+            session_destroy();
+        }
+    }
+
+    /**
+     * Elimina todas las cookies almacenadas internamente.
+     *
+     * @return void
+     */
+    public static function removeAllCookies(): void
+    {
+        foreach (self::$cookies as $name => $value) {
+            setcookie($name, '', time() - 3600, '/');
+        }
+        self::$cookies = [];
     }
 }

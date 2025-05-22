@@ -125,16 +125,24 @@ class BD
     public static function starTransaction(callable $callback)
     {
         self::openConexion();
-        self::$consexion->beginTransaction();
-        try {
-            $result = $callback();
-            self::$consexion->commit();
-            return $result;
-        } catch (Exception $e) {
-            self::$consexion->rollBack();
-            return ["error"=>$e];
-        } finally {
-            self::closeConsexion();
+        if (self::$consexion->inTransaction()) {
+            try {
+                return $callback();
+            } catch (Exception $e) {
+                return ["error" => $e->getMessage()];
+            }
+        } else {
+            self::$consexion->beginTransaction();
+            try {
+                $result = $callback();
+                self::$consexion->commit();
+                return $result;
+            } catch (Exception $e) {
+                self::$consexion->rollBack();
+                return ["error" => $e->getMessage()];
+            } finally {
+                self::closeConsexion();
+            }
         }
     }
 
@@ -283,12 +291,12 @@ class BD
      * @param array $params Parámetros para la consulta preparada.
      * @return bool True si la ejecución fue exitosa.
      */
-    private static function execute(string $query, array $params): bool
+    public static function execute(string $query, array $params = null): bool
     {
-        return true === self::starTransaction(function () use ($query, $params) {
+        return self::starTransaction(function () use ($query, $params) {
             $prepare = self::$consexion->prepare($query);
-            $prepare->execute($params);
-            return true;
+            $result = $prepare->execute($params);
+            return $result;
         });
     }
 
@@ -326,8 +334,7 @@ class BD
             $resultado = $prepare->rowCount() > 0;
             return $resultado;
         } catch (Exception $e) {
-            // En caso de error, se asume que el valor existe para evitar inconsistencias.
-            return true;
+            return false;
         } finally {
             self::closeConsexion();
         }
@@ -341,7 +348,7 @@ class BD
      * @param int $id Valor de la clave primaria del registro a eliminar.
      * @return bool True si la eliminación fue exitosa.
      */
-    public static function DeleteFromTable(string $table, string $primaryKey, int $id): bool
+    public static function DeleteFromTable(string $table, string $primaryKey, int $id)
     {
         return self::starTransaction(function () use ($table, $primaryKey, $id) {
             $query = "DELETE FROM $table WHERE $primaryKey = ?";

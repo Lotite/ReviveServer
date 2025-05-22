@@ -15,19 +15,7 @@ use Illuminate\Support\Facades\Validator;
 class AuthControler extends Controller
 {
 
-    public function verificar()
-    {
 
-    }
-
-
-    // public function firstUser(Request $request)
-    // {
-    //     return Controller::ControlerException($request, function () {
-    //         $user = BD::$Users->firstOrNull();
-    //         return Controller::responseMessage(true, 'Success', ["user", $user], 200);
-    //     });
-    // }
 
 
 
@@ -49,30 +37,63 @@ class AuthControler extends Controller
             'terms.required' => 'Debe aceptar los términos y condiciones.',
             'terms.accepted' => 'Debe aceptar los términos y condiciones.',
             'terms.boolean' => 'El valor de los términos debe ser verdadero o falso.',
+            'currentPassword.required' => 'La contraseña actual es obligatoria.',
+            'newPassword.required' => 'La nueva contraseña es obligatoria.',
+            'newPassword.min' => 'La nueva contraseña debe tener al menos 6 caracteres.',
+            'confirmPassword.required' => 'La confirmación de la nueva contraseña es obligatoria.',
+            'confirmPassword.same' => 'La confirmación de la nueva contraseña no coincide.',
+            'currentPassword.incorrect' => 'La contraseña actual es incorrecta.',
         ];
 
         $rules = [];
-        if ($action === 'register') {
-            $rules = [
-                'name' => 'required|string|max:255',
-                'email' => [
-                    'required',
-                    'email',
-                    function ($attribute, $value, $fail) {
-                        if (User::getByEmail($value)) {
-                            $fail('El correo electrónico ya está registrado.');
+        switch ($action) {
+            case 'register':
+                $rules = [
+                    'name' => 'required|string|max:255',
+                    'email' => [
+                        'required',
+                        'email',
+                        function ($attribute, $value, $fail) {
+                            if (User::getByEmail($value)) {
+                                $fail('El correo electrónico ya está registrado.');
+                            }
                         }
-                    }
-                ],
-                'password' => 'required|string|min:6',
-                'passwordConfirm' => 'required|same:password',
-                'terms' => 'required|accepted|boolean'
-            ];
-        } elseif ($action === 'login') {
-            $rules = [
-                'email' => 'required|email',
-                'password' => 'required|string|min:6'
-            ];
+                    ],
+                    'password' => 'required|string|min:6',
+                    'passwordConfirm' => 'required|same:password',
+                    'terms' => 'required|accepted|boolean'
+                ];
+                break;
+            case 'login':
+                $rules = [
+                    'email' => 'required|email',
+                    'password' => 'required|string|min:6'
+                ];
+                break;
+            case 'updateUser':
+                $rules = [
+                    'name' => 'sometimes|string|max:255',
+                    'email' => [
+                        'sometimes',
+                        'email',
+                        function ($attribute, $value, $fail) {
+                            if ($value != "" && User::getByEmail($value)) {
+                                $fail('El correo electrónico ya está registrado.');
+                            }
+                        }
+                    ],
+                ];
+                break;
+            case 'changePassword':
+                $rules = [
+                    'currentPassword' => 'required|string',
+                    'newPassword' => 'required|string|min:6',
+                    'confirmPassword' => 'required|string|same:newPassword',
+                ];
+                break;
+            default:
+                $rules = [];
+                break;
         }
 
         return Validator::make($request->all(), $rules, $messages);
@@ -125,16 +146,27 @@ class AuthControler extends Controller
     public function validateSession(Request $request)
     {
         return Controller::ControlerException($request, function () use ($request) {
-            DataManager::initialize($request);
 
+            DataManager::initialize($request);
             $token = DataManager::getData("device");
             if ($token == null)
-                return Controller::responseMessage(false, 'No hay dispositivo asociado a la sesión');
+                return Controller::responseMessage(false, 'Sesion denegada');
             $userId = Device::getUser($token);
-            $exist = User::ExistsUserId($userId);
-            return Controller::responseMessage($exist, 'Validacion', $token);
+            $user = User::getUser($userId);
+            $message = 'No se encuenta el dispositivo en la sesion';
+            if ($user) {
+                $message = 'Sesion aceptada';
+                $session = [
+                    "name" => $user->getName(),
+                    "email" => $user->getEmail(),
+                    "device" => Device::getByToken($token)->getId(),
+                ];
+            }
+            return Controller::responseMessage($user != null, $message, session: $session);
         });
     }
+
+
 
 
     private function errorMessages($validator)
@@ -147,5 +179,186 @@ class AuthControler extends Controller
         return $errorMessages;
     }
 
+    public function updateUser(Request $request)
+    {
+        return Controller::ControlerException($request, function () use ($request) {
+            $validator = $this->getValidator($request, 'updateUser');
 
+
+            if (!$request->has('name') && !$request->has('email')) {
+                return Controller::responseMessage(false, "Error en validar los datos", ['name' => 'No pueden estar los dos campos vacios', 'email' => ''], 422);
+            }
+
+            if ($validator->fails()) {
+                $errorMessages = $this->errorMessages($validator);
+                return Controller::responseMessage(false, "Error en validar los datos", $errorMessages, 422);
+            }
+
+            $deviceToken = DataManager::getData("device");
+            $userId = Device::getUser($deviceToken);
+            $user = User::getUser($userId);
+
+            if (!$user) {
+                return Controller::responseMessage(false, "Usuario no encontrado", [], 404);
+            }
+
+
+            if ($request->has('name')) {
+                $user->setName($request->input('name'));
+            }
+            if ($request->has('email')) {
+                $user->setEmail($request->input('email'));
+            }
+
+            return Controller::responseMessage(true, "Usuario actualizado correctamente");
+        });
+    }
+
+    public function changePassword(Request $request)
+    {
+        return Controller::ControlerException($request, function () use ($request) {
+            $validator = $this->getValidator($request, 'changePassword');
+
+            if ($validator->fails()) {
+                $errorMessages = $this->errorMessages($validator);
+                return Controller::responseMessage(false, "Error en validar los datos", $errorMessages, 422);
+            }
+
+            $deviceToken = DataManager::getData("device");
+            $userId = Device::getUser($deviceToken);
+            $user = User::getUser($userId);
+
+            if (!$user) {
+                return Controller::responseMessage(false, "Usuario no encontrado", [], 404);
+            }
+
+            if (!password_verify($request->input('currentPassword'), $user->getPassword())) {
+                $errorMessages = ["currentPassword" => "La contraseña actual es incorrecta", "newPassword" => "", "confirmPassword" => ""];
+                return Controller::responseMessage(false, "La contraseña actual es incorrecta", $errorMessages, 403);
+            }
+
+            $user->setPassword($request->input('newPassword'));
+
+
+            $currentToken = DataManager::getData("device");
+            if ($request->input('keepSessions') == false) {
+                $data = Device::deleteAllExcept($userId, $currentToken);
+            }
+
+            return Controller::responseMessage(true, "Contraseña actualizada correctamente", ["data" => $currentToken]);
+        });
+    }
+
+
+    public function getUserDevices(Request $request)
+    {
+        return Controller::ControlerException($request, function () use ($request) {
+            $deviceToken = DataManager::getData("device");
+            $userId = Device::getUser($deviceToken);
+            if ($userId === null) {
+                return Controller::responseMessage(false, "Usuario no autenticado", [], 401);
+            }
+
+            $devices = Device::getDevicesByUserId($userId);
+            $devicesArray = array_map(function ($device) {
+                return [
+                    'device_name' => $device->getDeviceType(),
+                    'last_active_timestamp' => $device->getLastActiveTimestamp(),
+                    'id' => $device->getId(),
+                    'register_at' => $device->getRegisterAt(),
+                ];
+            }, $devices);
+
+            return Controller::responseMessage(true, "Dispositivos obtenidos correctamente", $devicesArray);
+        });
+    }
+
+    public function deleteDevice(Request $request)
+    {
+        return Controller::ControlerException($request, function () use ($request) {
+            $deviceToken = DataManager::getData("device");
+            $userId = Device::getUser($deviceToken);
+            if ($userId === null) {
+                return Controller::responseMessage(false, "Usuario no autenticado", [], 401);
+            }
+
+            $deviceId = $request->input('id');
+            if (Device::deleteDevice($userId, $deviceId)) {
+                return Controller::responseMessage(true, "Dispositivo eliminado correctamente");
+            } else {
+                return Controller::responseMessage(false, "Error al eliminar el dispositivo", [], 500);
+            }
+        });
+    }
+
+    public function deleteOtherDevices(Request $request)
+    {
+        return Controller::ControlerException($request, function () use ($request) {
+            $deviceToken = DataManager::getData("device");
+            $userId = Device::getUser($deviceToken);
+            if ($userId === null) {
+                return Controller::responseMessage(false, "Usuario no autenticado", [], 401);
+            }
+
+            $result = Device::deleteAllExcept($userId, $deviceToken);
+            if ($result) {
+                return Controller::responseMessage(true, "Dispositivos eliminados excepto el actual");
+            } else {
+                return Controller::responseMessage(false, "Error al eliminar dispositivos", [], 500);
+            }
+        });
+    }
+
+    public function deleteUser(Request $request)
+    {
+        return Controller::ControlerException($request, function () use ($request) {
+            $deviceToken = DataManager::getData("device");
+            $userId = Device::getUser($deviceToken);
+            if ($userId === null) {
+                return Controller::responseMessage(false, "Usuario no autenticado", [], 401);
+            }
+
+
+            $user = User::getUser($userId);
+            if (!$user) {
+                return Controller::responseMessage(false, "Usuario no encontrado", [], 404);
+            }
+            Device::deleteAllExcept($userId, '');
+            $deleteUserResult = User::deleteUserById($userId);
+            if ($deleteUserResult !== true) {
+                return Controller::responseMessage(false, "Error al eliminar la cuenta de usuario", [$deleteUserResult], 500);
+            }
+
+
+           
+
+            return Controller::responseMessage(true, "Cuenta de usuario y dispositivos asociados eliminados correctamente");
+        });
+    }
+
+    public function logout(Request $request)
+    {
+        return Controller::ControlerException($request, function () use ($request) {
+            $deviceToken = DataManager::getData("device");
+            $userId = Device::getUser($deviceToken);
+            if ($userId === null) {
+                return Controller::responseMessage(false, "Usuario no autenticado", [], 401);
+            }
+
+            $device = Device::getByToken($deviceToken);
+            if (!$device) {
+                return Controller::responseMessage(false, "Dispositivo no encontrado", [], 404);
+            }
+
+            $deleted = Device::deleteDevice($userId, $device->getId());
+            if ($deleted) {
+
+                DataManager::removeAllSessionData();
+                DataManager::removeAllCookies();
+                return Controller::responseMessage(true, "Sesión cerrada correctamente");
+            } else {
+                return Controller::responseMessage(false, "Error al cerrar la sesión", [], 500);
+            }
+        });
+    }
 }
