@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Class\email;
 use App\Database\BD;
 use App\Http\Controllers\Controller;
 use App\Models\Device;
@@ -144,19 +145,21 @@ class AuthControler extends Controller
                 'token' => $token,
                 'expires_at' => $expires_at->format('Y-m-d H:i:s'),
             ];
+            User::DeteleFromVerification($email);
 
-            BD::InsertIntoTable("email_verifications", $verificationData);
-
+            User::AddVerification($verificationData);
             $verificationUrl = URL::temporarySignedRoute(
                 'verification.verify',
                 $expires_at,
                 ['token' => $token]
             );
 
-            Mail::raw("Por favor, verifica tu correo electrónico haciendo clic en el siguiente enlace: " . $verificationUrl, function ($message) use ($email) {
-                $message->to($email)
-                    ->subject('Verificación de correo electrónico');
-            });
+            $emailClass = new email();
+            $emailClass->send(
+                $email,
+                'Verificación de correo electrónico',
+                "Por favor, verifica tu correo electrónico haciendo clic en el siguiente enlace: {$verificationUrl}"
+            );
 
             return Controller::responseMessage(true, 'Registro exitoso. Por favor, verifica tu correo electrónico.');
         });
@@ -182,6 +185,13 @@ class AuthControler extends Controller
             if ($request->input("remember") == "true") {
                 DataManager::addCookie("device", $device->getToken());
             }
+
+            $emailClass = new email();
+            $emailClass->send(
+                $user->getEmail(),
+                'Inicio de sesión',
+                "Se ha iniciado sesión en tu cuenta el " . date('Y-m-d H:i:s') . " desde el dispositivo " . Controller::getNameDevice($request)
+            );
 
             return Controller::responseMessage(true, 'Login exitoso', DataManager::getSessionData("device"));
         });
@@ -283,6 +293,14 @@ class AuthControler extends Controller
                 $data = Device::deleteAllExcept($userId, $currentToken);
             }
 
+            // Send email notification
+            $emailClass = new email();
+            $emailClass->send(
+                $user->getEmail(),
+                'Contraselña cambiada',
+                "La contraseña de tu cuanta fue actualizado el " . date('Y-m-d H:i:s')
+            );
+
             return Controller::responseMessage(true, "Contraseña actualizada correctamente", ["data" => $currentToken]);
         });
     }
@@ -302,15 +320,14 @@ class AuthControler extends Controller
             if (!$user) {
                 return Controller::responseMessage(false, "No existe un usuario con ese correo electrónico", [], 404);
             }
+            UserRecover::deleteByEmail($email);
 
             $token = Str::random(60);
             $code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
             $expires_at = new DateTime('+30 minutes');
 
-            $existingRequest = UserRecover::getByEmail($email);
-            if ($existingRequest) {
-                UserRecover::deleteByEmail($email);
-            }
+
+
 
             $created = UserRecover::createNewUserRecover($email, $token, $code, $expires_at);
 
@@ -318,6 +335,13 @@ class AuthControler extends Controller
                 return Controller::responseMessage(false, "Error al crear la solicitud de recuperación", [], 500);
             }
 
+
+            $emailClass = new email();
+            $emailClass->send(
+                $email,
+                'Código de recuperación',
+                "Tu código de recuperación es: " . $code
+            );
 
             return Controller::responseMessage(true, "Código de recuperación enviado al correo electrónico", ["token" => $token]);
         });
@@ -376,6 +400,14 @@ class AuthControler extends Controller
 
             $user->setPassword($newPassword);
             UserRecover::deleteByToken($token);
+
+            // Send email notification
+            $emailClass = new email();
+            $emailClass->send(
+                $user->getEmail(),
+                'Contraseña cambiada',
+                "La contraseña de tu cuanta fue actualizado el  " . date('Y-m-d H:i:s')
+            );
 
             return Controller::responseMessage(true, "Contraseña restablecida correctamente");
         });
@@ -488,37 +520,5 @@ class AuthControler extends Controller
         });
     }
 
-    public function verifyEmail(Request $request, string $token)
-    {
-        return Controller::ControlerException($request, function () use ($request, $token) {
-            $verification = BD::getFirstRow("email_verifications", "*", ["token" => $token]);
-
-            if (!$verification) {
-                return Controller::responseMessage(false, "Token de verificación inválido.", [], 400);
-            }
-
-            $email = $verification['email'];
-            $expires_at = new DateTime($verification['expires_at']);
-
-            if ($expires_at < new DateTime()) {
-                BD::DeleteFromTable("email_verifications", "token", $token);
-            return Controller::responseMessage(false, "El token de verificación ha expirado.", [], 410);
-        }
-
-        $name = $verification['name'];
-        $password = $verification['password'];
-
-        $userData = [
-            'name' => $name,
-            'email' => $email,
-            'password' => $password,
-        ];
-
-        User::createNewUser($userData);
-
-        BD::DeleteFromTable("email_verifications", "token", $token);
-
-        return Controller::responseMessage(true, "Correo electrónico verificado correctamente. Ahora puedes iniciar sesión.");
-    });
-}
+    
 }

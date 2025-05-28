@@ -30,6 +30,8 @@ class Controller
         }
     }
 
+    
+
     /**
      * Obtiene el nombre del dispositivo a partir del User-Agent de la solicitud.
      * Si no se puede identificar, devuelve "Desconocido".

@@ -45,10 +45,12 @@ class User
      * @param array $data Datos para crear el usuario.
      * @return void
      */
-    public static function createNewUser(array $data)
+    public static function createNewUser(array $data, bool $encript = true)
     {
         $data["email"] = strtolower($data["email"]);
-        $data["password"] = password_hash($data["password"], PASSWORD_DEFAULT);
+        if ($encript) {
+            $data["password"] = password_hash($data["password"], PASSWORD_DEFAULT);
+        }
         BD::InsertIntoTable("users", $data);
     }
 
@@ -108,7 +110,7 @@ class User
         if ($user === null) {
             return null;
         }
-        if (password_verify($password, $user->password)) {
+        if (password_verify($password, $user->getPassword())) {
             return $user;
         } else {
             return null;
@@ -261,4 +263,15 @@ class User
             BD::UpdateTable("users", $column, $value, $this->id);
         }
     }
+
+    public static function AddVerification(array $verificationData)
+    {
+        BD::InsertIntoTable("email_verifications", $verificationData);
+    }
+
+    public static function DeteleFromVerification(string $email)
+    {
+        BD::DeleteFromTable("email_verifications", "email", $email);
+    }
+
 }

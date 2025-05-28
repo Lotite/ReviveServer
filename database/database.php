@@ -1,14 +1,6 @@
 <?php
 
 namespace App\Database;
-
-use App\Class\Devices;
-use App\Class\Generos;
-use App\Class\GenerosMedia;
-use App\Class\Medias;
-use App\Class\Movies;
-use App\Class\Series;
-use App\Class\Users;
 use Exception;
 use PDO;
 
@@ -348,7 +340,7 @@ class BD
      * @param int $id Valor de la clave primaria del registro a eliminar.
      * @return bool True si la eliminación fue exitosa.
      */
-    public static function DeleteFromTable(string $table, string $primaryKey, int $id)
+    public static function DeleteFromTable(string $table, string $primaryKey, int|string $id)
     {
         return self::starTransaction(function () use ($table, $primaryKey, $id) {
             $query = "DELETE FROM $table WHERE $primaryKey = ?";

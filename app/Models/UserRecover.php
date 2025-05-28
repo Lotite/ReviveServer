@@ -92,7 +92,7 @@ class UserRecover
      */
     public static function deleteByToken(string $token): bool
     {
-        return BD::DeleteFromTable("user_recover", "token", (int)$token);
+        return BD::DeleteFromTable("user_recover", "token", (int) $token);
     }
 
     /**
@@ -101,13 +101,9 @@ class UserRecover
      * @param string $email El email a eliminar.
      * @return bool True si la operación es exitosa, false si falla.
      */
-    public static function deleteByEmail(string $email): bool
+    public static function deleteByEmail(string $email)
     {
-        $userRecover = self::getByEmail($email);
-        if ($userRecover) {
-            return BD::DeleteFromTable("user_recover", "token", (int)$userRecover->getToken());
-        }
-        return false;
+        BD::DeleteFromTable("user_recover", "email", $email);
     }
 
     /**
@@ -131,6 +127,7 @@ class UserRecover
     {
         return BD::exist("email", $email, "user_recover");
     }
+
 
     /**
      * Obtiene la dirección de correo electrónico.
