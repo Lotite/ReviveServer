@@ -73,9 +73,10 @@ class User
     public static function getByEmail(string $email): ?User
     {
         $user = BD::getFirstRow("users", "*", ["email" => $email]);
-        if($user)
+        if (!$user) {
+            return null;
+        }
         return self::NewUser($user);
-        return null;
     }
 
     /**
@@ -147,7 +148,7 @@ class User
     }
 
 
-   
+
 
     /**
      * Obtiene el ID del usuario.

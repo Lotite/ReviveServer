@@ -175,4 +175,61 @@ class Medias extends Table
         return $list;
     }
 
+    public static function getSimilarMedia($generos, $tipo, $excludeMediaId, $cantidad)
+    {
+        if (is_string($generos)) {
+            $generos = [$generos];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($generos), '?'));
+
+        $sql = "SELECT m.*
+                FROM media m JOIN generomedia gm ON m.id = gm.media
+                WHERE gm.genero IN ($placeholders)
+                AND m.type = ?
+                AND m.id != ?
+                ORDER BY RAND()
+                LIMIT $cantidad;";
+
+        $params = array_merge($generos, [$tipo, $excludeMediaId]);
+
+        $mediasInfo = BD::getDataWithQuery($sql, $params);
+
+        if (empty($mediasInfo)) {
+            return new Medias();
+        }
+
+        return (new Medias($mediasInfo))->getDTO_List();
+    }
+
+    public static function getMediaById($mediaId)
+    {
+        $mediaInfo = BD::getFirstRow("media", "*", ["id" => $mediaId]);
+        if (empty($mediaInfo)) {
+            return null;
+        }
+
+        return Media::NewMedia($mediaInfo);
+    }
+
+    public static function searchMediaByName($name, $cantidad = 24)
+    {
+        $sql = "SELECT m.*
+                FROM media m
+                WHERE m.title LIKE '" . $name . "%'
+                LIMIT $cantidad;";
+
+        \Log::info("SQL Query: " . $sql);
+        
+
+        $mediasInfo = BD::getDataWithQuery($sql);
+
+        \Log::info("Query Result: " . json_encode($mediasInfo));
+
+        if (empty($mediasInfo)) {
+            return new Medias();
+        }
+
+        return (new Medias($mediasInfo))->getDTO_List();
+    }
 }

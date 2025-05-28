@@ -107,4 +107,20 @@ class Generos extends Table
         $generosData = BD::getDataWithQuery($sql);
         return new self($generosData);
     }
+
+    /**
+     * Devuelve una lista de IDs de los generos en la colección.
+     *
+     * @return array<int>
+     */
+
+    
+    public function getIds()
+    {
+        $ids = [];
+        foreach ($this as $genero) {
+            $ids[] = $genero->id;
+        }
+        return $ids;
+    }
 }

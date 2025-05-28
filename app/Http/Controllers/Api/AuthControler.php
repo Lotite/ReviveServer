@@ -6,20 +6,17 @@ use App\Database\BD;
 use App\Http\Controllers\Controller;
 use App\Models\Device;
 use App\Models\User;
+use App\Models\UserRecover;
 use DataManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
-
+use Illuminate\Support\Str;
+use DateTime;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 
 class AuthControler extends Controller
 {
-
-
-
-
-
-
     private function getValidator(Request $request, string $action)
     {
         $messages = [
@@ -43,6 +40,14 @@ class AuthControler extends Controller
             'confirmPassword.required' => 'La confirmación de la nueva contraseña es obligatoria.',
             'confirmPassword.same' => 'La confirmación de la nueva contraseña no coincide.',
             'currentPassword.incorrect' => 'La contraseña actual es incorrecta.',
+            'code.required' => 'El código de verificación es requerido.',
+            'code.string' => 'El código de verificación debe ser una cadena de texto.',
+            'code.size' => 'El código de verificación debe tener 6 caracteres.',
+            'newPassword.required' => 'La nueva contraseña es obligatoria.',
+            'newPassword.string' => 'La nueva contraseña debe ser una cadena de texto.',
+            'newPassword.min' => 'La nueva contraseña debe tener al menos 6 caracteres.',
+            'confirmPassword.required' => 'La confirmación de la nueva contraseña es obligatoria.',
+            'confirmPassword.same' => 'La confirmación de la nueva contraseña no coincide.',
         ];
 
         $rules = [];
@@ -70,6 +75,11 @@ class AuthControler extends Controller
                     'password' => 'required|string|min:6'
                 ];
                 break;
+            case 'recoverRequest':
+                $rules = [
+                    'email' => 'required|email',
+                ];
+                break;
             case 'updateUser':
                 $rules = [
                     'name' => 'sometimes|string|max:255',
@@ -87,6 +97,14 @@ class AuthControler extends Controller
             case 'changePassword':
                 $rules = [
                     'currentPassword' => 'required|string',
+                    'newPassword' => 'required|string|min:6',
+                    'confirmPassword' => 'required|string|same:newPassword',
+                ];
+                break;
+            case 'recoverReset':
+                $rules = [
+                    'email' => 'required|email',
+                    'code' => 'required|string|size:6',
                     'newPassword' => 'required|string|min:6',
                     'confirmPassword' => 'required|string|same:newPassword',
                 ];
@@ -112,9 +130,35 @@ class AuthControler extends Controller
                 'email' => $request->input("email"),
                 'password' => $request->input("password")
             ];
-            User::createNewUser($data);
 
-            return Controller::responseMessage(true, 'Registro exitoso');
+            $email = $data['email'];
+            $name = $data['name'];
+            $password = $data['password'];
+            $token = Str::random(60);
+            $expires_at = new DateTime('+30 minutes');
+
+            $verificationData = [
+                'name' => $name,
+                'email' => $email,
+                'password' => password_hash($password, PASSWORD_DEFAULT),
+                'token' => $token,
+                'expires_at' => $expires_at->format('Y-m-d H:i:s'),
+            ];
+
+            BD::InsertIntoTable("email_verifications", $verificationData);
+
+            $verificationUrl = URL::temporarySignedRoute(
+                'verification.verify',
+                $expires_at,
+                ['token' => $token]
+            );
+
+            Mail::raw("Por favor, verifica tu correo electrónico haciendo clic en el siguiente enlace: " . $verificationUrl, function ($message) use ($email) {
+                $message->to($email)
+                    ->subject('Verificación de correo electrónico');
+            });
+
+            return Controller::responseMessage(true, 'Registro exitoso. Por favor, verifica tu correo electrónico.');
         });
     }
 
@@ -166,9 +210,6 @@ class AuthControler extends Controller
         });
     }
 
-
-
-
     private function errorMessages($validator)
     {
         $errors = $validator->errors()->toArray();
@@ -183,7 +224,6 @@ class AuthControler extends Controller
     {
         return Controller::ControlerException($request, function () use ($request) {
             $validator = $this->getValidator($request, 'updateUser');
-
 
             if (!$request->has('name') && !$request->has('email')) {
                 return Controller::responseMessage(false, "Error en validar los datos", ['name' => 'No pueden estar los dos campos vacios', 'email' => ''], 422);
@@ -201,7 +241,6 @@ class AuthControler extends Controller
             if (!$user) {
                 return Controller::responseMessage(false, "Usuario no encontrado", [], 404);
             }
-
 
             if ($request->has('name')) {
                 $user->setName($request->input('name'));
@@ -239,7 +278,6 @@ class AuthControler extends Controller
 
             $user->setPassword($request->input('newPassword'));
 
-
             $currentToken = DataManager::getData("device");
             if ($request->input('keepSessions') == false) {
                 $data = Device::deleteAllExcept($userId, $currentToken);
@@ -249,6 +287,99 @@ class AuthControler extends Controller
         });
     }
 
+    public function recoverRequest(Request $request)
+    {
+        return Controller::ControlerException($request, function () use ($request) {
+            $validator = $this->getValidator($request, 'recoverRequest');
+            if ($validator->fails()) {
+                $errorMessages = $this->errorMessages($validator);
+                return Controller::responseMessage(false, "Error en validar los datos", $errorMessages, 422);
+            }
+
+            $email = $request->input('email');
+            $user = User::getByEmail($email);
+
+            if (!$user) {
+                return Controller::responseMessage(false, "No existe un usuario con ese correo electrónico", [], 404);
+            }
+
+            $token = Str::random(60);
+            $code = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            $expires_at = new DateTime('+30 minutes');
+
+            $existingRequest = UserRecover::getByEmail($email);
+            if ($existingRequest) {
+                UserRecover::deleteByEmail($email);
+            }
+
+            $created = UserRecover::createNewUserRecover($email, $token, $code, $expires_at);
+
+            if (!$created) {
+                return Controller::responseMessage(false, "Error al crear la solicitud de recuperación", [], 500);
+            }
+
+
+            return Controller::responseMessage(true, "Código de recuperación enviado al correo electrónico", ["token" => $token]);
+        });
+    }
+
+    public function recoverVerify(Request $request)
+    {
+        return Controller::ControlerException($request, function () use ($request) {
+            $code = $request->input('code');
+            $email = $request->input('email');
+
+            $userRecover = UserRecover::getByEmail($email);
+
+            if (!$userRecover) {
+                return Controller::responseMessage(false, "Solicitud de recuperación no encontrada", [], 404);
+            }
+
+            if ($userRecover->getCode() !== $code) {
+                return Controller::responseMessage(false, "Código de verificación incorrecto", [], 400);
+            }
+
+            if ($userRecover->getExpiresAt() < new DateTime()) {
+                UserRecover::deleteByEmail($email);
+                return Controller::responseMessage(false, "El código de verificación ha expirado", [], 410);
+            }
+
+            return Controller::responseMessage(true, "Código de verificación correcto", ["token" => $userRecover->getToken()]);
+        });
+    }
+
+    public function recoverReset(Request $request)
+    {
+        return Controller::ControlerException($request, function () use ($request) {
+            $validator = $this->getValidator($request, 'recoverReset');
+
+            if ($validator->fails()) {
+                $errorMessages = $this->errorMessages($validator);
+                return Controller::responseMessage(false, "Error en validar los datos", $errorMessages, 422);
+            }
+
+            $token = $request->input('token');
+            $newPassword = $request->input('newPassword');
+
+            $userRecover = UserRecover::getByToken($token);
+
+            if (!$userRecover) {
+                return Controller::responseMessage(false, "Solicitud de recuperación no encontrada", [], 404);
+            }
+
+            $email = $userRecover->getEmail();
+            $user = User::getByEmail($email);
+
+            if (!$user) {
+                return Controller::responseMessage(false, "Usuario no encontrado", [], 404);
+            }
+
+            $user->setPassword($newPassword);
+            UserRecover::deleteByToken($token);
+
+            return Controller::responseMessage(true, "Contraseña restablecida correctamente");
+        });
+    }
 
     public function getUserDevices(Request $request)
     {
@@ -318,7 +449,6 @@ class AuthControler extends Controller
                 return Controller::responseMessage(false, "Usuario no autenticado", [], 401);
             }
 
-
             $user = User::getUser($userId);
             if (!$user) {
                 return Controller::responseMessage(false, "Usuario no encontrado", [], 404);
@@ -328,9 +458,6 @@ class AuthControler extends Controller
             if ($deleteUserResult !== true) {
                 return Controller::responseMessage(false, "Error al eliminar la cuenta de usuario", [$deleteUserResult], 500);
             }
-
-
-           
 
             return Controller::responseMessage(true, "Cuenta de usuario y dispositivos asociados eliminados correctamente");
         });
@@ -352,7 +479,6 @@ class AuthControler extends Controller
 
             $deleted = Device::deleteDevice($userId, $device->getId());
             if ($deleted) {
-
                 DataManager::removeAllSessionData();
                 DataManager::removeAllCookies();
                 return Controller::responseMessage(true, "Sesión cerrada correctamente");
@@ -361,4 +487,38 @@ class AuthControler extends Controller
             }
         });
     }
+
+    public function verifyEmail(Request $request, string $token)
+    {
+        return Controller::ControlerException($request, function () use ($request, $token) {
+            $verification = BD::getFirstRow("email_verifications", "*", ["token" => $token]);
+
+            if (!$verification) {
+                return Controller::responseMessage(false, "Token de verificación inválido.", [], 400);
+            }
+
+            $email = $verification['email'];
+            $expires_at = new DateTime($verification['expires_at']);
+
+            if ($expires_at < new DateTime()) {
+                BD::DeleteFromTable("email_verifications", "token", $token);
+            return Controller::responseMessage(false, "El token de verificación ha expirado.", [], 410);
+        }
+
+        $name = $verification['name'];
+        $password = $verification['password'];
+
+        $userData = [
+            'name' => $name,
+            'email' => $email,
+            'password' => $password,
+        ];
+
+        User::createNewUser($userData);
+
+        BD::DeleteFromTable("email_verifications", "token", $token);
+
+        return Controller::responseMessage(true, "Correo electrónico verificado correctamente. Ahora puedes iniciar sesión.");
+    });
+}
 }

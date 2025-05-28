@@ -291,7 +291,7 @@ class BD
      * @param array $params Parámetros para la consulta preparada.
      * @return bool True si la ejecución fue exitosa.
      */
-    public static function execute(string $query, array $params = null): bool
+    public static function execute(string $query, array $params = null)
     {
         return self::starTransaction(function () use ($query, $params) {
             $prepare = self::$consexion->prepare($query);
@@ -307,7 +307,7 @@ class BD
      * @param array $datos Arreglo asociativo con columnas y valores a insertar.
      * @return bool True si la inserción fue exitosa.
      */
-    public static function InsertIntoTable(string $table, array $datos): bool
+    public static function InsertIntoTable(string $table, array $datos)
     {
         $columns = "( " . self::implodeKeys($datos) . " )";
         $values = "( " . self::implodeInterogation(count($datos)) . " )";

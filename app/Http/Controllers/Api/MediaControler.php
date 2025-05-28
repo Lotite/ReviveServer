@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 
 class MediaControler extends Controller
 {
- 
+
 
   public function home()
   {
@@ -31,17 +31,46 @@ class MediaControler extends Controller
     return Controller::responseMessage(success: true, data: $recommendations);
   }
 
-  public  function recommendate($tipo = ['movie', 'serie']){
+  public function recommendate($tipo = ['movie', 'serie'])
+  {
     $generos = Generos::getRandomGeneros(6);
     $recommendations = [];
 
     foreach ($generos as $genero) {
-      $medias = Medias::getRandomMediaWhitGenero($genero->id, 8,$tipo);
+      $medias = Medias::getRandomMediaWhitGenero($genero->id, 8, $tipo);
       $recommendations[] = [
         'genero' => $genero,
         'medias' => $medias
       ];
     }
     return $recommendations;
+  }
+
+  public function recommendateSimilar(Request $request)
+  {
+    $mediaId = $request->input('media_id');
+    $quantity = $request->input('quantity', 5); 
+
+    $media = Medias::getMediaById($mediaId);
+
+    if (!$media) {
+      return Controller::responseMessage(success: false, message: 'Media no encontrada', status: 404);
+    }
+
+    $generos = $media->getGeneros()->getIds();
+    $tipo = $media->type;
+
+    $recommendations = Medias::getSimilarMedia($generos, $tipo, $mediaId, $quantity);
+
+    return Controller::responseMessage(success: true, data: $recommendations);
+  }
+
+  public function searchMedia(Request $request)
+  {
+    $name = $request->input('name');
+
+    $medias = Medias::searchMediaByName($name);
+
+    return Controller::responseMessage(success: true, data: $medias);
   }
 }
