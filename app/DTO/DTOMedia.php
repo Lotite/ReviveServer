@@ -2,7 +2,10 @@
 
 namespace App\DTO;
 
+use App\Database\BD;
 use App\Models\Media;
+use App\Models\Season;
+use App\Models\Serie;
 
 class DTOMedia
 {
@@ -33,14 +36,23 @@ class DTOMedia
         $this->date = $media->release_date;
         $this->number = 0;
         $this->type = $media->type;
-        $this->duracion = 100;
         $this->clasificacion = 20;
-        $this->generos = $media->getGenerosName() ;
+        $this->generos = $media->getGenerosName();
         $this->reparto = $media->getRepartoName(true);
         $this->director = $media->getDirector();
-        
-        
 
-
+        switch ($this->type) {
+            case 'serie':
+                $seriesId = Serie::getSeriesId($media->id);
+                $this->duracion = BD::countData("seasons", ["series_id" => $seriesId]);
+                break;
+            case 'season':
+                $seasonId = Season::getSeasionId($media->id);
+                $this->duracion = BD::countData("episodes", ["season_id" => $seasonId]);
+                break;
+            default:
+                $this->duracion = 100;
+                break;
+        }
     }
 }

@@ -22,11 +22,11 @@ class BD
     private static $consexion = null;
 
     /**
-     * Abre la conexión a la base de datos si no está ya establecida.
-     * 
-     * Crea una nueva instancia PDO para la conexión a la base de datos MySQL.
-     * Si la conexión falla, imprime un mensaje JSON y termina la ejecución.
-     * 
+     * Opens the connection to the database if it is not already established.
+     *
+     * Creates a new PDO instance for the connection to the MySQL database.
+     * If the connection fails, prints a JSON message and terminates the execution.
+     *
      * @return void
      */
     private static function openConexion()
@@ -345,6 +345,24 @@ class BD
         return self::starTransaction(function () use ($table, $primaryKey, $id) {
             $query = "DELETE FROM $table WHERE $primaryKey = ?";
             return self::execute($query, [$id]);
+        });
+    }
+
+    /**
+     * Cuenta el número de filas en una tabla según una condición.
+     *
+     * @param string $table El nombre de la tabla.
+     * @param array $condition Condiciones para la cláusula WHERE.
+     * @return int El número de filas que coinciden con la condición.
+     */
+    public static function countData(string $table, array $condition): int
+    {
+        return self::starTransaction(function () use ($table, $condition) {
+            $where = self::strWhere($condition);
+            $valores = array_values($condition);
+            $prepare = self::$consexion->prepare("SELECT COUNT(*) FROM $table WHERE $where ");
+            $prepare->execute($valores);
+            return (int) $prepare->fetchColumn();
         });
     }
 }

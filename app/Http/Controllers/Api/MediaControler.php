@@ -73,4 +73,34 @@ class MediaControler extends Controller
 
     return Controller::responseMessage(success: true, data: $medias);
   }
+
+  public function getSeasonsAndEpisodes(Request $request)
+  {
+    $seriesMediaId = $request->input('media_id');
+
+    $seasonsData = BD::getData("seasons", "*", ["series_id" => $seriesMediaId]);
+
+    $seasons = [];
+    foreach ($seasonsData as $seasonData) {
+      $seasonMedia = Media::getMediaById($seasonData['media_id']);
+
+      $episodesData = BD::getData("episodes", "*", ["season_id" => $seasonData['id']]);
+      $episodes = [];
+      foreach ($episodesData as $episodeData) {
+        $episodeMedia = Media::getMediaById($episodeData['media_id']);
+        if ($episodeMedia) {
+          $episodes[] = $episodeMedia->getDTO_Media();
+        }
+      }
+
+      if ($seasonMedia) {
+        $seasons[] = [
+          'season' => $seasonMedia->getDTO_Media(),
+          'episodes' => $episodes
+        ];
+      }
+    }
+
+    return Controller::responseMessage(success: true, data: $seasons);
+  }
 }

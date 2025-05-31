@@ -162,4 +162,14 @@ class Media
 
         return $names;
     }
+
+    public static function getMediaById($mediaId)
+    {
+        $mediaInfo = BD::getFirstRow("media", "*", ["id" => $mediaId]);
+        if (empty($mediaInfo)) {
+            return null;
+        }
+
+        return Media::NewMedia($mediaInfo);
+    }
 }

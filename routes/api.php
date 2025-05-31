@@ -41,4 +41,5 @@ Route::post('/movies', [MediaControler::class, "movies"]);
 Route::post('/series', [MediaControler::class, "series"]);
 Route::post('/recommendateSimilar', [MediaControler::class, "recommendateSimilar"]);
 Route::post('/search', [MediaControler::class, 'searchMedia']);
+Route::post('/seasonsAndEpisodes', [MediaControler::class, 'getSeasonsAndEpisodes']);
 Route::get('/email/verify/{token}', [VerificationResponseControler::class, 'verifyEmail'])->name('verification.verify');

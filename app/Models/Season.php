@@ -5,34 +5,38 @@ namespace App\Models;
 use App\Database\BD;
 use App\Models\Media;
 
-class Serie
+class Season
 {
     public int $id;
+    public ?int $series_id;
     public int $media_id;
+    public ?int $season_number;
 
     public function __construct(array $data = [])
     {
         $this->id = $data['id'] ?? 0;
+        $this->series_id = $data['series_id'] ?? null;
         $this->media_id = $data['media_id'] ?? 0;
+        $this->season_number = $data['season_number'] ?? null;
     }
 
     /**
-     * Método estático que devuelve una Serie.
+     * Static method that returns a Season.
      *
      * @param array|object $data
-     * @return Serie
+     * @return Season
      */
-    public static function NewSerie($data): Serie
+    public static function NewSeason($data): Season
     {
         if (is_object($data)) {
             $data = (array) $data;
         }
-        return Media::NewMedia($data);
+        
+        return new Season($data);
     }
 
-
     /**
-     * Devuelve el objeto Media asociado a esta Serie.
+     * Returns the Media object associated with this Season.
      *
      * @return Media|null
      */
@@ -46,27 +50,27 @@ class Serie
     }
 
     /**
-     * Obtiene el ID de la serie por el ID del media.
+     * Obtiene el ID de la temporada por el ID del media.
      *
      * @param int $mediaId
      * @return int|null
      */
-    public static function getSeriesId(int $mediaId): ?int
+    public static function getSeasionId(int $mediaId): ?int
     {
-        $seriesData = BD::getFirstRow("series", "*", ["media_id" => $mediaId]);
-        if (!$seriesData) {
+        $seasonData = BD::getFirstRow("seasons", "*", ["media_id" => $mediaId]);
+        if (!$seasonData) {
             return null;
         }
-        return $seriesData['id'] ?? null;
+        return $seasonData['id'] ?? null;
     }
 
     /**
-     * Obtiene la duración de la serie.
+     * Get the duration of the season.
      *
      * @return int
      */
     public function getDuration(): int
     {
-        return BD::countData("seasons", ["series_id" => $this->id]);
+        return BD::countData("episodes", ["season_id" => $this->id]);
     }
 }
