@@ -22,6 +22,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::post('/hasContinuation', [MediaControler::class, 'hasContinuation']);
+
 
 Route::post('/deleteDevice', [AuthControler::class, "deleteDevice"]);
 Route::post('/deleteUser', [AuthControler::class, "deleteUser"]);
@@ -42,4 +44,9 @@ Route::post('/series', [MediaControler::class, "series"]);
 Route::post('/recommendateSimilar', [MediaControler::class, "recommendateSimilar"]);
 Route::post('/search', [MediaControler::class, 'searchMedia']);
 Route::post('/seasonsAndEpisodes', [MediaControler::class, 'getSeasonsAndEpisodes']);
+Route::post('/carousel', [MediaControler::class, 'getCarouselMedia']);
+Route::post('/saveMediaToList', [MediaControler::class, 'saveMediaToList']);
+Route::post('/deleteMediaFromList', [MediaControler::class, 'deleteMediaFromList']);
+Route::post('/isMediaInUserList', [MediaControler::class, 'isMediaInUserList']);
+Route::post('/getUserList', [MediaControler::class, 'getUserList']);
 Route::get('/email/verify/{token}', [VerificationResponseControler::class, 'verifyEmail'])->name('verification.verify');

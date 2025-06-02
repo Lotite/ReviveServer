@@ -32,7 +32,7 @@ class DTOMedia
         $this->portada = "https://picsum.photos/400/100?random=" . $idImg;
         $this->banner = "https://picsum.photos/1000/400?random=" . $idImg;
         $this->description = $media->descripcion;
-        $this->reseña = 5;
+        $this->reseña = rand(30, 50) / 10;
         $this->date = $media->release_date;
         $this->number = 0;
         $this->type = $media->type;

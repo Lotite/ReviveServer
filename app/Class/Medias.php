@@ -8,9 +8,35 @@ use App\Models\Media;
 
 use App\Class\Movies;
 use App\Class\Series;
+use Illuminate\Support\Facades\DB;
 
 class Medias extends Table
 {
+    /**
+     * Obtiene una lista aleatoria de media por tipo.
+     *
+     * @param string|null $type Tipo de media a filtrar (movie, serie, etc.). Si es null, no se filtra por tipo.
+     * @param int $quantity Cantidad de media a retornar.
+     * @return Medias Lista de objetos Medias.
+     */
+    public static function getRandomMediaByType(string|null $type = "", $quantity = 10)
+    {
+        $sql = "SELECT * FROM media where type ";
+        $where = "in ('movie','serie')";
+        if($type) $where = " = '$type'";
+
+        $sql .= $where;
+        
+        $sql .= " ORDER BY RAND() LIMIT $quantity";
+
+        $mediasInfo = BD::getDataWithQuery($sql);
+
+        if (empty($mediasInfo)) {
+            return new Medias();
+        }
+
+        return (new Medias($mediasInfo))->getDTO_List();
+    }
     /**
      * Verifica si una variable es una instancia de Medias.
      *
@@ -217,14 +243,13 @@ class Medias extends Table
         $sql = "SELECT m.*
                 FROM media m
                 WHERE m.title LIKE '" . $name . "%'
+                AND type in ('serie','movie')
                 LIMIT $cantidad;";
 
-        \Log::info("SQL Query: " . $sql);
-        
+
 
         $mediasInfo = BD::getDataWithQuery($sql);
 
-        \Log::info("Query Result: " . json_encode($mediasInfo));
 
         if (empty($mediasInfo)) {
             return new Medias();

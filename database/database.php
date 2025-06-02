@@ -360,9 +360,39 @@ class BD
         return self::starTransaction(function () use ($table, $condition) {
             $where = self::strWhere($condition);
             $valores = array_values($condition);
-            $prepare = self::$consexion->prepare("SELECT COUNT(*) FROM $table WHERE $where ");
+            $prepare = self::$consexion->prepare("SELECT COUNT(*) FROM $table WHERE $where");
             $prepare->execute($valores);
             return (int) $prepare->fetchColumn();
         });
+    }
+
+    /**
+     * Verifica si existe un registro en una tabla que coincida con múltiples condiciones.
+     *
+     * @param string $table Nombre de la tabla.
+     * @param array $conditions Arreglo asociativo con las columnas y valores para la condición WHERE.
+     * @return bool True si existe un registro que coincida con todas las condiciones, false en caso contrario.
+     */
+    public static function existMultiple(string $table, array $conditions): bool
+    {
+        self::openConexion();
+        try {
+            $whereClauses = [];
+            $params = [];
+            foreach ($conditions as $column => $value) {
+                $whereClauses[] = "$column = ?";
+                $params[] = $value;
+            }
+            $whereClause = implode(" AND ", $whereClauses);
+            $query = "SELECT 1 FROM $table WHERE $whereClause";
+            $prepare = self::$consexion->prepare($query);
+            $prepare->execute($params);
+            $resultado = $prepare->rowCount() > 0;
+            return $resultado;
+        } catch (Exception $e) {
+            return false;
+        } finally {
+            self::closeConsexion();
+        }
     }
 }

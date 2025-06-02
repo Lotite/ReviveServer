@@ -31,7 +31,7 @@ class Episode
         if (is_object($data)) {
             $data = (array) $data;
         }
-        
+
         return new Episode($data);
     }
 
@@ -47,5 +47,64 @@ class Episode
             return null;
         }
         return Media::NewMedia($mediaData);
+    }
+
+
+    /**
+     * Obtiene un episodio por su ID de media.
+     *
+     * @param int $mediaId ID de la media.
+     * @return Episode|null
+     */
+    public static function getEpisodeByMediaId(int $mediaId): ?Episode
+    {
+        $episodeData = BD::getFirstRow("episodes", "*", ["media_id" => $mediaId]);
+        if (!$episodeData) {
+            return null;
+        }
+        return Episode::NewEpisode($episodeData);
+    }
+
+    /**
+     * Obtiene el siguiente episodio en una serie.
+     *
+     * @param int $mediaId ID de la media actual.
+     * @return mixed
+     */
+    public static function nextEpisodie(int $mediaId)
+    {
+        $episode = self::getEpisodeByMediaId($mediaId);
+
+        if (!$episode) {
+            return false;
+        }
+
+        $seasonId = $episode->season_id;
+        $episodeNumber = $episode->episode_number;
+
+        $nextEpisodeData = BD::getFirstRow(
+            "episodes",
+            "*",
+            [
+                "season_id" => $seasonId,
+                "episode_number" => $episodeNumber + 1,
+            ]
+        );
+
+        if (!$nextEpisodeData) {
+            return false;
+        }
+
+        $newCap = Episode::NewEpisode($nextEpisodeData);
+
+        $nexMediaCap = BD::getFirstRow(
+            "media",
+            "*",
+            [
+                "id"=> $newCap->media_id,
+            ]
+        );
+
+        return Media::NewMedia($nexMediaCap)->getDTO_Media();
     }
 }
