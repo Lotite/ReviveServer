@@ -3,13 +3,15 @@
 namespace App\Class;
 
 use App\Class\Table;
+use App\Database\BD;
+use App\Models\Media;
 use App\Models\Movie;
-use App\Class\BD; // Use BD class for database access
+
 
 class Movies extends Table
 {
-   
-    
+
+
 
 
     /**
@@ -86,5 +88,29 @@ class Movies extends Table
     public function any(callable $callback = null): bool
     {
         return parent::any($callback);
+    }
+
+    /**
+     * Crea un nuevo registro de película en la base de datos.
+     *
+     * @param Movie $movie El objeto Movie a insertar.
+     * @return bool True si la inserción fue exitosa, false en caso contrario.
+     */
+    public static function create(array $movie): bool|int
+    {
+
+        $result = Media::create($movie);
+
+        if ($result) {
+            $data = [
+                'media_id' => $result,
+                'duration' => $movie["duration"],
+            ];
+            if (BD::InsertIntoTable('movies', $data))
+                return $result;
+        }
+
+        return false;
+
     }
 }

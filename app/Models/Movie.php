@@ -9,11 +9,13 @@ class Movie
 {
     public int $id;
     public int $media_id;
+    public ?int $duration;
 
     public function __construct(array $data = [])
     {
         $this->id = $data['id'] ?? 0;
         $this->media_id = $data['media_id'] ?? 0;
+        $this->duration = $data['duration'] ?? null;
     }
 
     /**
@@ -28,8 +30,13 @@ class Movie
             $data = (array) $data;
         }
         
-        return new Movie($data);
+        return new Movie([
+            'id' => $data['id'] ?? 0,
+            'media_id' => $data['media_id'] ?? 0,
+            'duration' => $data['duration'] ?? null,
+        ]);
     }
+    
 
     /**
      * Devuelve el objeto Media asociado con este Movie.

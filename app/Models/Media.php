@@ -172,4 +172,26 @@ class Media
 
         return Media::NewMedia($mediaInfo);
     }
+
+    /**
+     * Crea un nuevo registro de media en la base de datos.
+     *
+     * @param Media $media El objeto Media a insertar.
+     * @return bool True si la inserción fue exitosa, false en caso contrario.
+     */
+    public static function create(array $media): bool|string
+    {
+        $data = [
+            'title' => $media["title"],
+            'description' => $media["description"],
+            'release_date' => $media["release_date"],
+            'tmdb_id' => $media["tmdb_id"],
+            'type' => $media["type"],
+        ];
+        $result = BD::InsertIntoTable('media', $data);
+        if ($result) {
+            return BD::getLastInsertIdForTable("media");
+        }
+        return false;
+    }
 }

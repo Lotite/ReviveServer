@@ -366,6 +366,11 @@ class BD
         });
     }
 
+
+
+
+
+
     /**
      * Verifica si existe un registro en una tabla que coincida con múltiples condiciones.
      *
@@ -394,5 +399,23 @@ class BD
         } finally {
             self::closeConsexion();
         }
+    }
+
+    /**
+     * Obtiene el último ID insertado en la tabla especificada.
+     *
+     * @param string $table Nombre de la tabla.
+     * @return string El último ID insertado.
+     */
+    public static function getLastInsertIdForTable(string $table): int
+    {
+        $query = "SELECT id FROM $table ORDER BY id DESC LIMIT 1";
+        $result = self::getDataWithQuery($query);
+
+        if (!empty($result)) {
+            return (int) $result[0]['id'];
+        }
+
+        return 0;
     }
 }

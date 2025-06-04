@@ -11,6 +11,7 @@ class Episode
     public ?int $season_id;
     public int $media_id;
     public ?int $episode_number;
+    public ?int $duration;
 
     public function __construct(array $data = [])
     {
@@ -18,6 +19,7 @@ class Episode
         $this->season_id = $data['season_id'] ?? null;
         $this->media_id = $data['media_id'] ?? 0;
         $this->episode_number = $data['episode_number'] ?? null;
+        $this->duration = $data['duration'] ?? null;
     }
 
     /**
@@ -32,7 +34,13 @@ class Episode
             $data = (array) $data;
         }
 
-        return new Episode($data);
+        return new Episode([
+            'id' => $data['id'] ?? 0,
+            'season_id' => $data['season_id'] ?? null,
+            'media_id' => $data['media_id'] ?? 0,
+            'episode_number' => $data['episode_number'] ?? null,
+            'duration' => $data['duration'] ?? null,
+        ]);
     }
 
     /**
@@ -62,7 +70,13 @@ class Episode
         if (!$episodeData) {
             return null;
         }
-        return Episode::NewEpisode($episodeData);
+        return Episode::NewEpisode([
+            'id' => $episodeData['id'] ?? 0,
+            'season_id' => $episodeData['season_id'] ?? null,
+            'media_id' => $episodeData['media_id'] ?? 0,
+            'episode_number' => $episodeData['episode_number'] ?? null,
+            'duration' => $episodeData['duration'] ?? null,
+        ]);
     }
 
     /**

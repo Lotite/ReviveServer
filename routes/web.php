@@ -10,8 +10,12 @@ Route::get('/', function () {
     return "hola";
 });
 
-Route::get('/media/{filename}', function ($filename) {
-    $path = storage_path("app/public/media/{$filename}");
+Route::match(['get', 'post'], "/movies", function () {
+    return view('movies.index');
+});
+
+Route::get('/media/{id}/{filename}', function ($id, $filename) {
+    $path = storage_path("app/public/media/{$id}/{$filename}");
 
     if (!File::exists($path)) {
         abort(404);

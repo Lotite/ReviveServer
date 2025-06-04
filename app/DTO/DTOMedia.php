@@ -23,6 +23,7 @@ class DTOMedia
     public ?array $generos;
     public ?array $reparto;
     public ?string $director;
+    public ?string $video;
     //https://image.tmdb.org/t/p/original/
     public function __construct(Media $media)
     {
@@ -40,7 +41,7 @@ class DTOMedia
         $this->generos = $media->getGenerosName();
         $this->reparto = $media->getRepartoName(true);
         $this->director = $media->getDirector();
-
+        $this->video = "";
         switch ($this->type) {
             case 'serie':
                 $seriesId = Serie::getSeriesId($media->id);
