@@ -3,8 +3,9 @@
 namespace App\Class;
 
 use App\Class\Table;
+use App\Database\BD;
+use App\Models\Media;
 use App\Models\Episode;
-use App\Class\BD;
 
 class Episodes extends Table
 {
@@ -54,7 +55,7 @@ class Episodes extends Table
      * Devuelve una lista filtrada de episodes según el callback.
      *
      * @param callable(Episode): bool $callback Función de filtro.
-     * @return Episodes Nueva instancia de Episodes con episodes filtrados.
+     * @return Episodes Nueva instancia de Episodes con episodes filtradas.
      */
     public function where(callable $callback): Episodes
     {
@@ -82,5 +83,42 @@ class Episodes extends Table
     public function any(callable $callback = null): bool
     {
         return parent::any($callback);
+    }
+
+    /**
+     * Crea un nuevo episodio en la base de datos.
+     *
+     * @param array $data Datos del episodio a crear.
+     * @return bool True si el episodio se creó correctamente, false en caso contrario.
+     */
+    public static function create(array $data): array|bool
+    {
+        // First create media
+        $mediaId = Media::create([
+            'title' => $data['title'] ?? '',
+            'description' => $data['description'] ?? '',
+            'release_date' => $data['release_date'] ?? null,
+            'tmdb_id' => $data['tmdb_id'] ?? null,
+            'type' => 'episode',
+        ]);
+
+        if (!$mediaId) {
+            return false;
+        }
+
+        $episodeCreated = BD::InsertIntoTable('episodes', [
+            'media_id' => $mediaId,
+            'season_id' => $data['season_id'] ?? null,
+            'duration' => $data['duration'] ?? null,
+            'episode_number' => $data['episode_number'] ?? null,
+        ]);
+
+        if (!$episodeCreated) {
+            return false;
+        }
+
+        $id = BD::getLastInsertIdForTable("episodes");
+
+        return ["id" => $id, "id_media" => $mediaId];
     }
 }

@@ -3,8 +3,8 @@
 namespace App\Class;
 
 use App\Class\Table;
+use App\Database\BD;
 use App\Models\Serie;
-use App\Class\BD; 
 
 class Series extends Table
 {
@@ -82,5 +82,40 @@ class Series extends Table
     public function any(callable $callback = null): bool
     {
         return parent::any($callback);
+    }
+
+    /**
+     * Crea una nueva serie en la base de datos.
+     *
+     * @param array $data Datos de la serie a crear.
+     * @return array|bool Array con ids si se creó correctamente, false en caso contrario.
+     */
+    public static function create(array $data)
+    {
+
+        $mediaId = \App\Models\Media::create([
+            'title' => $data['title'] ?? '',
+            'description' => $data['description'] ?? '',
+            'release_date' => $data['release_date'] ?? null,
+            'tmdb_id' => $data['tmdb_id'] ?? null,
+            'type' => 'serie',
+        ]);
+
+        if (!$mediaId) {
+            return false;
+        }
+
+
+        $seriesCreated = BD::InsertIntoTable('series', [
+            'media_id' => $mediaId
+        ]);
+
+        if (!$seriesCreated) {
+            return false;
+        }
+
+        $id = BD::getLastInsertIdForTable("series");
+
+        return ["id" => $id, "id_media" => $mediaId];
     }
 }

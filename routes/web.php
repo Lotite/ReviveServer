@@ -14,6 +14,18 @@ Route::match(['get', 'post'], "/movies", function () {
     return view('movies.index');
 });
 
+Route::match(['get', 'post'], "/series", function () {
+    return view('series.index');
+});
+
+use App\Http\Controllers\SeasonController;
+Route::get('/seasons', [SeasonController::class, 'index']);
+Route::post('/seasons', [SeasonController::class, 'store']);
+
+use App\Http\Controllers\EpisodeController;
+Route::get('/episodes', [EpisodeController::class, 'index']);
+Route::post('/episodes', [EpisodeController::class, 'store']);
+
 Route::get('/media/{id}/{filename}', function ($id, $filename) {
     $path = storage_path("app/public/media/{$id}/{$filename}");
 

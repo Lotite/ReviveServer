@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Añadir Película</title>
+    <title>Añadir Temporada</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -15,23 +15,30 @@
 
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
-        <h2 class="text-3xl font-extrabold text-gray-800 mb-8 text-center">Añadir Nueva Película</h2>
+        <h2 class="text-3xl font-extrabold text-gray-800 mb-8 text-center">Añadir Nueva Temporada</h2>
 
-        <form action="/movies" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <form action="" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
+
+            <div>
+                <label for="series_id" class="block text-gray-700 text-sm font-semibold mb-2">ID de Serie</label>
+                <input type="number" id="series_id" name="series_id"
+                    class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    placeholder="Ej. 1" />
+            </div>
 
             <div>
                 <label for="title" class="block text-gray-700 text-sm font-semibold mb-2">Título</label>
                 <input type="text" id="title" name="title"
                     class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                    placeholder="Título de la película" />
+                    placeholder="Título de la temporada" />
             </div>
 
             <div>
                 <label for="description" class="block text-gray-700 text-sm font-semibold mb-2">Descripción</label>
                 <textarea id="description" name="description" rows="4"
                     class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                    placeholder="Breve descripción de la película..."></textarea>
+                    placeholder="Breve descripción de la temporada..."></textarea>
             </div>
 
             <div>
@@ -39,13 +46,6 @@
                     lanzamiento</label>
                 <input type="date" id="release_date" name="release_date"
                     class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200" />
-            </div>
-
-            <div>
-                <label for="duration" class="block text-gray-700 text-sm font-semibold mb-2">Duración (minutos)</label>
-                <input type="number" id="duration" name="duration"
-                    class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                    placeholder="Ej. 120" />
             </div>
 
             <div>
@@ -68,14 +68,16 @@
             </div>
 
             <div>
-                <label for="video" class="block text-gray-700 text-sm font-semibold mb-2">Video</label>
-                <input type="file" id="video" name="video" accept="video/*"
-                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
+                <label for="season_number" class="block text-gray-700 text-sm font-semibold mb-2">Número de
+                    Temporada</label>
+                <input type="number" id="season_number" name="season_number"
+                    class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    placeholder="Ej. 1" />
             </div>
 
             <button type="submit"
                 class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200">
-                Añadir Película
+                Añadir Temporada
             </button>
         </form>
 
@@ -83,7 +85,7 @@
             <?php if (isset($portadaUrl)): ?>
             <div class="mb-4">
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">Portada Actual</h3>
-                <img src="<?php echo $portadaUrl; ?>" alt="Portada"
+                <img src="<?php    echo $portadaUrl; ?>" alt="Portada"
                     class="max-w-xs mx-auto rounded-lg shadow-md border border-gray-200 object-cover">
             </div>
             <?php endif; ?>
@@ -91,27 +93,18 @@
             <?php if (isset($bannerUrl)): ?>
             <div class="mb-4">
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">Banner Actual</h3>
-                <img src="<?php echo $bannerUrl; ?>" alt="Banner"
+                <img src="<?php    echo $bannerUrl; ?>" alt="Banner"
                     class="max-w-xs mx-auto rounded-lg shadow-md border border-gray-200 object-cover">
-            </div>
-            <?php endif; ?>
-
-            <?php if (isset($videoUrl)): ?>
-            <div class="mb-4">
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">Video Actual</h3>
-                <video src="<?php echo $videoUrl; ?>" width="320" height="240" controls
-                    class="mx-auto rounded-lg shadow-md border border-gray-200 bg-black"></video>
             </div>
             <?php endif; ?>
         </div>
 
-        <div class="mt-8 text-center flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+        <div
+            class="mt-8 text-center flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <img id="portada-preview" src="#" alt="Vista previa de la portada"
                 class="hidden max-w-xs mx-auto rounded-lg shadow-md border border-gray-200 object-cover">
             <img id="banner-preview" src="#" alt="Vista previa del banner"
                 class="hidden max-w-xs mx-auto rounded-lg shadow-md border border-gray-200 object-cover">
-            <video id="video-preview" width="320" height="240" controls
-                class="hidden mx-auto rounded-lg shadow-md border border-gray-200 bg-black"></video>
         </div>
     </div>
 
@@ -120,38 +113,16 @@
         const portadaPreview = document.getElementById('portada-preview');
         const bannerInput = document.getElementById('banner');
         const bannerPreview = document.getElementById('banner-preview');
-        const videoInput = document.getElementById('video');
-        const videoPreview = document.getElementById('video-preview');
 
         function handleImagePreview(inputElement, previewElement) {
-            inputElement.addEventListener('change', function() {
+            inputElement.addEventListener('change', function () {
                 const file = this.files[0];
 
                 if (file) {
                     const reader = new FileReader();
                     previewElement.classList.remove('hidden');
 
-                    reader.addEventListener('load', function() {
-                        previewElement.setAttribute('src', this.result);
-                    });
-
-                    reader.readAsDataURL(file);
-                } else {
-                    previewElement.setAttribute('src', '#');
-                    previewElement.classList.add('hidden');
-                }
-            });
-        }
-
-        function handleVideoPreview(inputElement, previewElement) {
-            inputElement.addEventListener('change', function() {
-                const file = this.files[0];
-
-                if (file) {
-                    const reader = new FileReader();
-                    previewElement.classList.remove('hidden');
-
-                    reader.addEventListener('load', function() {
+                    reader.addEventListener('load', function () {
                         previewElement.setAttribute('src', this.result);
                     });
 
@@ -165,62 +136,49 @@
 
         handleImagePreview(portadaInput, portadaPreview);
         handleImagePreview(bannerInput, bannerPreview);
-        handleVideoPreview(videoInput, videoPreview);
 
     </script>
 
     <?php
-    use App\Class\Movies;
-    use App\Class\MediaStorageManager;
-    use Illuminate\Support\Facades\Storage;
-    use Illuminate\Http\UploadedFile;
+use App\Class\Seasons;
+use App\Class\MediaStorageManager;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 
-    $portadaUrl = null;
-    $bannerUrl = null;
-    $videoUrl = null;
+$portadaUrl = null;
+$bannerUrl = null;
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'])) {
-        $post = $_POST;
-        $post["type"] = "movie";
-        $movie = Movies::create($post);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'])) {
+    $post = $_POST;
+    $post["type"] = "season";
+    $season = Seasons::create($post);
 
-        if ($movie) {
-            $id = $movie;
+    if ($season) {
+        $id = $season;
 
-            if (isset($_FILES['portada']) && $_FILES['portada']['error'] === UPLOAD_ERR_OK) {
-                $portadaPath = MediaStorageManager::savePoster(new UploadedFile(
-                    $_FILES['portada']['tmp_name'],
-                    $_FILES['portada']['name'],
-                    $_FILES['portada']['type'],
-                    $_FILES['portada']['size'],
-                    $_FILES['portada']['error']
-                ), $id);
-                $portadaUrl = $portadaPath ? Storage::url($portadaPath) : null;
-            }
+        if (isset($_FILES['portada']) && $_FILES['portada']['error'] === UPLOAD_ERR_OK) {
+            $portadaPath = MediaStorageManager::savePoster(new UploadedFile(
+                $_FILES['portada']['tmp_name'],
+                $_FILES['portada']['name'],
+                $_FILES['portada']['type'],
+                $_FILES['portada']['size'],
+                $_FILES['portada']['error']
+            ), $id);
+            $portadaUrl = $portadaPath ? Storage::url($portadaPath) : null;
+        }
 
-            if (isset($_FILES['banner']) && $_FILES['banner']['error'] === UPLOAD_ERR_OK) {
-                $bannerPath = MediaStorageManager::saveBanner(new UploadedFile(
-                    $_FILES['banner']['tmp_name'],
-                    $_FILES['banner']['name'],
-                    $_FILES['banner']['type'],
-                    $_FILES['banner']['size'],
-                    $_FILES['banner']['error']
-                ), $id);
-                $bannerUrl = $bannerPath ? Storage::url($bannerPath) : null;
-            }
-
-            if (isset($_FILES['video']) && $_FILES['video']['error'] === UPLOAD_ERR_OK) {
-                $videoPath = MediaStorageManager::saveVideo(new UploadedFile(
-                    $_FILES['video']['tmp_name'],
-                    $_FILES['video']['name'],
-                    $_FILES['video']['type'],
-                    $_FILES['video']['size'],
-                    $_FILES['video']['error']
-                ), $id);
-                $videoUrl = $videoPath ? Storage::url($videoPath) : null;
-            }
+        if (isset($_FILES['banner']) && $_FILES['banner']['error'] === UPLOAD_ERR_OK) {
+            $bannerPath = MediaStorageManager::saveBanner(new UploadedFile(
+                $_FILES['banner']['tmp_name'],
+                $_FILES['banner']['name'],
+                $_FILES['banner']['type'],
+                $_FILES['banner']['size'],
+                $_FILES['banner']['error']
+            ), $id);
+            $bannerUrl = $bannerPath ? Storage::url($bannerPath) : null;
         }
     }
+}
     ?>
 </body>
 
