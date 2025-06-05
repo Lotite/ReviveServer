@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthControler;
+use App\Http\Controllers\Api\ContributorController;
 use App\Http\Controllers\Api\MediaControler;
 use App\Http\Controllers\Api\VerificationResponseControler;
 use Illuminate\Http\Request;
@@ -45,6 +46,7 @@ Route::post('/recommendateSimilar', [MediaControler::class, "recommendateSimilar
 Route::post('/search', [MediaControler::class, 'searchMedia']);
 Route::post('/seasonsAndEpisodes', [MediaControler::class, 'getSeasonsAndEpisodes']);
 Route::post('/carousel', [MediaControler::class, 'getCarouselMedia']);
+Route::get('/contributors/search', [ContributorController::class, 'search']);
 Route::post('/saveMediaToList', [MediaControler::class, 'saveMediaToList']);
 Route::post('/deleteMediaFromList', [MediaControler::class, 'deleteMediaFromList']);
 Route::post('/isMediaInUserList', [MediaControler::class, 'isMediaInUserList']);

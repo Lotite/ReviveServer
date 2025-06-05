@@ -56,6 +56,39 @@
             </div>
 
             <div>
+                <label class="block text-gray-700 text-sm font-semibold mb-2">Géneros</label>
+                <div class="flex flex-wrap -mx-2">
+                    <?php
+use App\Class\Generos;
+$generos = Generos::getGeneros();
+                    ?>
+                    <?php foreach ($generos as $genero): ?>
+                    <div class="px-2 w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="generos[]" value="<?php    echo $genero->id; ?>"
+                                class="form-checkbox text-blue-600">
+                            <span class="ml-2 text-gray-700 text-sm"><?php    echo $genero->nombre_genero; ?></span>
+                        </label>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <div>
+                <label for="contributor_search" class="block text-gray-700 text-sm font-semibold mb-2">Buscar Contribuidor</label>
+                <input type="text" id="contributor_search"
+                    class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    placeholder="Buscar por nombre de contribuidor" />
+                <div id="contributor_results" class="mt-2 border border-gray-300 rounded-md max-h-40 overflow-y-auto hidden">
+                    <!-- Search results will be loaded here -->
+                </div>
+                <div id="selected_contributors" class="mt-2 flex flex-wrap gap-2">
+                    <!-- Selected contributors will be displayed here -->
+                </div>
+                <input type="hidden" name="contributor_ids" id="contributor_ids" value="">
+            </div>
+
+            <div>
                 <label for="portada" class="block text-gray-700 text-sm font-semibold mb-2">Portada</label>
                 <input type="file" id="portada" name="portada" accept="image/*"
                     class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" />
@@ -83,7 +116,7 @@
             <?php if (isset($portadaUrl)): ?>
             <div class="mb-4">
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">Portada Actual</h3>
-                <img src="<?php echo $portadaUrl; ?>" alt="Portada"
+                <img src="<?php    echo $portadaUrl; ?>" alt="Portada"
                     class="max-w-xs mx-auto rounded-lg shadow-md border border-gray-200 object-cover">
             </div>
             <?php endif; ?>
@@ -91,7 +124,7 @@
             <?php if (isset($bannerUrl)): ?>
             <div class="mb-4">
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">Banner Actual</h3>
-                <img src="<?php echo $bannerUrl; ?>" alt="Banner"
+                <img src="<?php    echo $bannerUrl; ?>" alt="Banner"
                     class="max-w-xs mx-auto rounded-lg shadow-md border border-gray-200 object-cover">
             </div>
             <?php endif; ?>
@@ -99,13 +132,14 @@
             <?php if (isset($videoUrl)): ?>
             <div class="mb-4">
                 <h3 class="text-xl font-semibold text-gray-800 mb-2">Video Actual</h3>
-                <video src="<?php echo $videoUrl; ?>" width="320" height="240" controls
+                <video src="<?php    echo $videoUrl; ?>" width="320" height="240" controls
                     class="mx-auto rounded-lg shadow-md border border-gray-200 bg-black"></video>
             </div>
             <?php endif; ?>
         </div>
 
-        <div class="mt-8 text-center flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+        <div
+            class="mt-8 text-center flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <img id="portada-preview" src="#" alt="Vista previa de la portada"
                 class="hidden max-w-xs mx-auto rounded-lg shadow-md border border-gray-200 object-cover">
             <img id="banner-preview" src="#" alt="Vista previa del banner"
@@ -124,14 +158,14 @@
         const videoPreview = document.getElementById('video-preview');
 
         function handleImagePreview(inputElement, previewElement) {
-            inputElement.addEventListener('change', function() {
+            inputElement.addEventListener('change', function () {
                 const file = this.files[0];
 
                 if (file) {
                     const reader = new FileReader();
                     previewElement.classList.remove('hidden');
 
-                    reader.addEventListener('load', function() {
+                    reader.addEventListener('load', function () {
                         previewElement.setAttribute('src', this.result);
                     });
 
@@ -144,14 +178,14 @@
         }
 
         function handleVideoPreview(inputElement, previewElement) {
-            inputElement.addEventListener('change', function() {
+            inputElement.addEventListener('change', function () {
                 const file = this.files[0];
 
                 if (file) {
                     const reader = new FileReader();
                     previewElement.classList.remove('hidden');
 
-                    reader.addEventListener('load', function() {
+                    reader.addEventListener('load', function () {
                         previewElement.setAttribute('src', this.result);
                     });
 
@@ -169,58 +203,158 @@
 
     </script>
 
+    <script>
+        const contributorSearchInput = document.getElementById('contributor_search');
+        const contributorResultsDiv = document.getElementById('contributor_results');
+        const selectedContributorsDiv = document.getElementById('selected_contributors');
+        const contributorIdsInput = document.getElementById('contributor_ids');
+
+        const selectedContributorIds = new Set();
+
+        contributorSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.trim();
+
+            if (searchTerm.length > 2) { // Only search if more than 2 characters are typed
+                fetch(`/api/contributors/search?name=${searchTerm}`) // Assuming an API endpoint for searching contributors
+                    .then(response => response.json())
+                    .then(data => {
+                        displayContributorResults(data);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching contributors:', error);
+                        contributorResultsDiv.innerHTML = '<div class="p-2 text-red-500">Error searching for contributors.</div>';
+                        contributorResultsDiv.classList.remove('hidden');
+                    });
+            } else {
+                contributorResultsDiv.innerHTML = '';
+                contributorResultsDiv.classList.add('hidden');
+            }
+        });
+
+        function displayContributorResults(contributors) {
+            contributorResultsDiv.innerHTML = '';
+            if (contributors.length > 0) {
+                contributors.forEach(contributor => {
+                    const resultElement = document.createElement('div');
+                    resultElement.classList.add('p-2', 'cursor-pointer', 'hover:bg-gray-200');
+                    resultElement.textContent = contributor.name + (contributor.role ? ` (${contributor.role})` : '');
+                    resultElement.dataset.contributorId = contributor.id;
+                    resultElement.dataset.contributorName = contributor.name;
+                    resultElement.dataset.contributorRole = contributor.role || '';
+
+                    resultElement.addEventListener('click', function() {
+                        addContributor(this.dataset.contributorId, this.dataset.contributorName, this.dataset.contributorRole);
+                        contributorResultsDiv.innerHTML = '';
+                        contributorResultsDiv.classList.add('hidden');
+                        contributorSearchInput.value = '';
+                    });
+
+                    contributorResultsDiv.appendChild(resultElement);
+                });
+                contributorResultsDiv.classList.remove('hidden');
+            } else {
+                contributorResultsDiv.innerHTML = '<div class="p-2 text-gray-500">No contributors found.</div>';
+                contributorResultsDiv.classList.remove('hidden');
+            }
+        }
+
+        function addContributor(id, name, role) {
+            if (!selectedContributorIds.has(id)) {
+                selectedContributorIds.add(id);
+
+                const selectedElement = document.createElement('span');
+                selectedElement.classList.add('inline-flex', 'items-center', 'bg-blue-100', 'text-blue-800', 'text-sm', 'font-medium', 'px-2.5', 'py-0.5', 'rounded-full');
+                selectedElement.textContent = name + (role ? ` (${role})` : '');
+
+                const removeButton = document.createElement('button');
+                removeButton.classList.add('ml-1', 'inline-flex', 'items-center', 'justify-center', 'w-4', 'h-4', 'text-blue-400', 'hover:text-blue-600', 'rounded-full', 'focus:outline-none');
+                removeButton.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                removeButton.addEventListener('click', function() {
+                    removeContributor(id, selectedElement);
+                });
+
+                selectedElement.appendChild(removeButton);
+                selectedContributorsDiv.appendChild(selectedElement);
+
+                updateContributorIdsInput();
+            }
+        }
+
+        function removeContributor(id, element) {
+            selectedContributorIds.delete(id);
+            element.remove();
+            updateContributorIdsInput();
+        }
+
+        function updateContributorIdsInput() {
+            contributorIdsInput.value = Array.from(selectedContributorIds).join(',');
+        }
+    </script>
+
     <?php
-    use App\Class\Movies;
-    use App\Class\MediaStorageManager;
-    use Illuminate\Support\Facades\Storage;
-    use Illuminate\Http\UploadedFile;
+use App\Class\Movies;
+use App\Models\GeneroMedia;
+use App\Models\Credit;
+use App\Class\MediaStorageManager;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 
-    $portadaUrl = null;
-    $bannerUrl = null;
-    $videoUrl = null;
+$portadaUrl = null;
+$bannerUrl = null;
+$videoUrl = null;
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'])) {
-        $post = $_POST;
-        $post["type"] = "movie";
-        $movie = Movies::create($post);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'])) {
+    $post = $_POST;
+    $post["type"] = "movie";
+    $movie = Movies::create($post);
 
         if ($movie) {
             $id = $movie;
 
+            if (isset($_POST['generos']) && is_array($_POST['generos'])) {
+                GeneroMedia::associateMediaWithGenres($id, $_POST['generos']);
+            }
+
+            // Associate contributors with the movie
+            if (isset($_POST['contributor_ids']) && !empty($_POST['contributor_ids'])) {
+                $contributorIds = explode(',', $_POST['contributor_ids']);
+                Credit::associateMediaWithContributors($id, $contributorIds);
+            }
+
             if (isset($_FILES['portada']) && $_FILES['portada']['error'] === UPLOAD_ERR_OK) {
-                $portadaPath = MediaStorageManager::savePoster(new UploadedFile(
-                    $_FILES['portada']['tmp_name'],
-                    $_FILES['portada']['name'],
-                    $_FILES['portada']['type'],
-                    $_FILES['portada']['size'],
-                    $_FILES['portada']['error']
-                ), $id);
-                $portadaUrl = $portadaPath ? Storage::url($portadaPath) : null;
-            }
+            $portadaPath = MediaStorageManager::savePoster(new UploadedFile(
+                $_FILES['portada']['tmp_name'],
+                $_FILES['portada']['name'],
+                $_FILES['portada']['type'],
+                $_FILES['portada']['size'],
+                $_FILES['portada']['error']
+            ), $id);
+            $portadaUrl = $portadaPath ? Storage::url($portadaPath) : null;
+        }
 
-            if (isset($_FILES['banner']) && $_FILES['banner']['error'] === UPLOAD_ERR_OK) {
-                $bannerPath = MediaStorageManager::saveBanner(new UploadedFile(
-                    $_FILES['banner']['tmp_name'],
-                    $_FILES['banner']['name'],
-                    $_FILES['banner']['type'],
-                    $_FILES['banner']['size'],
-                    $_FILES['banner']['error']
-                ), $id);
-                $bannerUrl = $bannerPath ? Storage::url($bannerPath) : null;
-            }
+        if (isset($_FILES['banner']) && $_FILES['banner']['error'] === UPLOAD_ERR_OK) {
+            $bannerPath = MediaStorageManager::saveBanner(new UploadedFile(
+                $_FILES['banner']['tmp_name'],
+                $_FILES['banner']['name'],
+                $_FILES['banner']['type'],
+                $_FILES['banner']['size'],
+                $_FILES['banner']['error']
+            ), $id);
+            $bannerUrl = $bannerPath ? Storage::url($bannerPath) : null;
+        }
 
-            if (isset($_FILES['video']) && $_FILES['video']['error'] === UPLOAD_ERR_OK) {
-                $videoPath = MediaStorageManager::saveVideo(new UploadedFile(
-                    $_FILES['video']['tmp_name'],
-                    $_FILES['video']['name'],
-                    $_FILES['video']['type'],
-                    $_FILES['video']['size'],
-                    $_FILES['video']['error']
-                ), $id);
-                $videoUrl = $videoPath ? Storage::url($videoPath) : null;
-            }
+        if (isset($_FILES['video']) && $_FILES['video']['error'] === UPLOAD_ERR_OK) {
+            $videoPath = MediaStorageManager::saveVideo(new UploadedFile(
+                $_FILES['video']['tmp_name'],
+                $_FILES['video']['name'],
+                $_FILES['video']['type'],
+                $_FILES['video']['size'],
+                $_FILES['video']['error']
+            ), $id);
+            $videoUrl = $videoPath ? Storage::url($videoPath) : null;
         }
     }
+}
     ?>
 </body>
 

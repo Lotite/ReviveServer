@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Database\BD;
+
 class GeneroMedia
 {
     public int $id;
@@ -27,5 +29,32 @@ class GeneroMedia
             $data = (array) $data;
         }
         return new GeneroMedia($data);
+    }
+
+
+    /**
+     * Asocia una media con una lista de géneros.
+     *
+     * @param int $mediaId El ID de la media.
+     * @param array $generoIds Un array de IDs de géneros.
+     * @return bool True si la asociación fue exitosa para todos los géneros, false en caso contrario.
+     */
+    public static function associateMediaWithGenres(int $mediaId, array $generoIds): bool
+    {
+        if (empty($generoIds)) {
+            return true; // No genres to associate
+        }
+
+        $success = true;
+        foreach ($generoIds as $generoId) {
+            $data = [
+                'media' => $mediaId,
+                'genero' => $generoId,
+            ];
+            if (!BD::InsertIntoTable('generomedia', $data)) {
+                $success = false;
+            }
+        }
+        return $success;
     }
 }
