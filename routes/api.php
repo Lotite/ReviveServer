@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthControler;
 use App\Http\Controllers\Api\ContributorController;
 use App\Http\Controllers\Api\MediaControler;
 use App\Http\Controllers\Api\VerificationResponseControler;
+use App\Http\Controllers\Api\TmdbController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -52,3 +53,5 @@ Route::post('/deleteMediaFromList', [MediaControler::class, 'deleteMediaFromList
 Route::post('/isMediaInUserList', [MediaControler::class, 'isMediaInUserList']);
 Route::post('/getUserList', [MediaControler::class, 'getUserList']);
 Route::get('/email/verify/{token}', [VerificationResponseControler::class, 'verifyEmail'])->name('verification.verify');
+
+Route::get('/tmdb/search/movies', [TmdbController::class, 'searchMovies']);

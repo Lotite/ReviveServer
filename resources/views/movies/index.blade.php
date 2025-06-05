@@ -17,6 +17,23 @@
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
         <h2 class="text-3xl font-extrabold text-gray-800 mb-8 text-center">Añadir Nueva Película</h2>
 
+        <!-- TMDB Movie Search -->
+        <div class="mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Buscar Película en TMDB</h3>
+            <div class="flex space-x-4">
+                <input type="text" id="tmdb_search_input"
+                    class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    placeholder="Introduce el título de la película" />
+                <button type="button" id="tmdb_search_button"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200">
+                    Buscar
+                </button>
+            </div>
+            <div id="tmdb_search_results" class="mt-4 border border-gray-300 rounded-md max-h-60 overflow-y-auto hidden">
+                <!-- TMDB search results will be loaded here -->
+            </div>
+        </div>
+
         <form action="/movies" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
@@ -254,7 +271,7 @@ $generos = Generos::getGeneros();
                 contributorResultsDiv.classList.remove('hidden');
             } else {
                 contributorResultsDiv.innerHTML = '<div class="p-2 text-gray-500">No contributors found.</div>';
-                contributorResultsDiv.classList.remove('hidden');
+                contributorResultsDiv.classList.add('hidden');
             }
         }
 
@@ -288,6 +305,108 @@ $generos = Generos::getGeneros();
 
         function updateContributorIdsInput() {
             contributorIdsInput.value = Array.from(selectedContributorIds).join(',');
+        }
+    </script>
+
+    <script>
+        const tmdbSearchInput = document.getElementById('tmdb_search_input');
+        const tmdbSearchButton = document.getElementById('tmdb_search_button');
+        const tmdbSearchResultsDiv = document.getElementById('tmdb_search_results');
+
+        tmdbSearchButton.addEventListener('click', function() {
+            const query = tmdbSearchInput.value.trim();
+
+            if (query.length > 2) {
+                // Make an AJAX request to the backend to search TMDB
+                fetch(`/api/tmdb/search/movies?query=${encodeURIComponent(query)}`) // Assuming a backend route /api/tmdb/search/movies
+                    .then(response => response.json())
+                    .then(data => {
+                        displayTmdbSearchResults(data);
+                    })
+                    .catch(error => {
+                        console.error('Error searching TMDB:', error);
+                        tmdbSearchResultsDiv.innerHTML = '<div class="p-2 text-red-500">Error searching for movies.</div>';
+                        tmdbSearchResultsDiv.classList.remove('hidden');
+                    });
+            } else {
+                tmdbSearchResultsDiv.innerHTML = '';
+                tmdbSearchResultsDiv.classList.add('hidden');
+            }
+        });
+
+        function displayTmdbSearchResults(results) {
+            tmdbSearchResultsDiv.innerHTML = '';
+            if (results.length > 0) {
+                results.forEach(movie => {
+                    const resultElement = document.createElement('div');
+                    resultElement.classList.add('p-2', 'cursor-pointer', 'hover:bg-gray-200', 'flex', 'items-center');
+                    resultElement.dataset.movieId = movie.id;
+                    resultElement.dataset.movieTitle = movie.title;
+                    resultElement.dataset.movieOverview = movie.description;
+                    resultElement.dataset.movieReleaseDate = movie.date;
+                    resultElement.dataset.moviePoster = movie.portada;
+                    resultElement.dataset.movieBanner = movie.banner;
+
+                    let imageUrl = movie.portada;
+                    if (imageUrl && imageUrl.startsWith('https://image.tmdb.org/')) {
+                         // Use a smaller size for the thumbnail in search results
+                         imageUrl = imageUrl.replace('/w1280/', '/w92/');
+                    } else {
+                        // Use a placeholder if no image is available
+                        imageUrl = 'https://via.placeholder.com/92x138?text=No+Image';
+                    }
+
+
+                    resultElement.innerHTML = `
+                        <img src="${imageUrl}" alt="${movie.title}" class="w-12 h-18 object-cover rounded-md mr-4">
+                        <div>
+                            <div class="font-semibold">${movie.title}</div>
+                            <div class="text-sm text-gray-600">${movie.date ? new Date(movie.date).getFullYear() : 'N/A'}</div>
+                        </div>
+                    `;
+
+
+                    resultElement.addEventListener('click', function() {
+                        populateFormWithMovieData(this.dataset);
+                        tmdbSearchResultsDiv.innerHTML = '';
+                        tmdbSearchResultsDiv.classList.add('hidden');
+                    });
+
+                    tmdbSearchResultsDiv.appendChild(resultElement);
+                });
+                tmdbSearchResultsDiv.classList.remove('hidden');
+            } else {
+                tmdbSearchResultsDiv.innerHTML = '<div class="p-2 text-gray-500">No movies found.</div>';
+                tmdbSearchResultsDiv.classList.add('hidden');
+            }
+        }
+
+        function populateFormWithMovieData(movieData) {
+            document.getElementById('tmdb_id').value = movieData.movieId;
+            document.getElementById('title').value = movieData.movieTitle;
+            document.getElementById('description').value = movieData.movieOverview;
+            document.getElementById('release_date').value = movieData.movieReleaseDate;
+
+            // Select genres based on TMDB genre IDs
+            const tmdbGenreIds = JSON.parse(movieData.generos); // Assuming generos is a JSON string of IDs
+            const genreCheckboxes = document.querySelectorAll('input[name="generos[]"]');
+
+            genreCheckboxes.forEach(checkbox => {
+                if (tmdbGenreIds.includes(parseInt(checkbox.value))) {
+                    checkbox.checked = true;
+                } else {
+                    checkbox.checked = false; // Deselect if not in TMDB genres
+                }
+            });
+
+
+            // Note: Handling image files from URL requires backend processing or a different approach
+            // For now, we'll just display the image URLs if needed or handle separately.
+            // The current file inputs are for uploading local files.
+            console.log("Poster URL:", movieData.moviePoster);
+            console.log("Banner URL:", movieData.movieBanner);
+
+            // You might want to add logic here to fetch genres and contributors based on TMDB ID
         }
     </script>
 
