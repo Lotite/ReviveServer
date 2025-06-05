@@ -17,7 +17,24 @@
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
         <h2 class="text-3xl font-extrabold text-gray-800 mb-8 text-center">Añadir Nueva Serie</h2>
 
-        <form action="" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <!-- TMDB Series Search -->
+        <div class="mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Buscar Serie en TMDB</h3>
+            <div class="flex space-x-4">
+                <input type="text" id="tmdb_search_input"
+                    class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    placeholder="Introduce el título de la serie" />
+                <button type="button" id="tmdb_search_button"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200">
+                    Buscar
+                </button>
+            </div>
+            <div id="tmdb_search_results" class="mt-4 border border-gray-300 rounded-md max-h-60 overflow-y-auto hidden">
+                <!-- TMDB search results will be loaded here -->
+            </div>
+        </div>
+
+        <form action="/series" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
             <div>
@@ -162,6 +179,10 @@
         const selectedContributorsDiv = document.getElementById('selected_contributors');
         const contributorIdsInput = document.getElementById('contributor_ids');
 
+        const tmdbSearchInput = document.getElementById('tmdb_search_input');
+        const tmdbSearchButton = document.getElementById('tmdb_search_button');
+        const tmdbSearchResultsDiv = document.getElementById('tmdb_search_results');
+
         const selectedContributorIds = new Set();
 
         contributorSearchInput.addEventListener('input', function() {
@@ -241,6 +262,95 @@
 
         function updateContributorIdsInput() {
             contributorIdsInput.value = Array.from(selectedContributorIds).join(',');
+        }
+
+        tmdbSearchButton.addEventListener('click', function() {
+            const query = tmdbSearchInput.value.trim();
+
+            if (query.length > 2) {
+                // Make an AJAX request to the backend to search TMDB for series
+                fetch(`/api/tmdb/search/series?query=${encodeURIComponent(query)}`) // Assuming a backend route /api/tmdb/search/series
+                    .then(response => response.json())
+                    .then(data => {
+                        displayTmdbSearchResults(data);
+                    })
+                    .catch(error => {
+                        console.error('Error searching TMDB:', error);
+                        tmdbSearchResultsDiv.innerHTML = '<div class="p-2 text-red-500">Error searching for series.</div>';
+                        tmdbSearchResultsDiv.classList.remove('hidden');
+                    });
+            } else {
+                tmdbSearchResultsDiv.innerHTML = '';
+                tmdbSearchResultsDiv.classList.add('hidden');
+            }
+        });
+
+        function displayTmdbSearchResults(results) {
+            tmdbSearchResultsDiv.innerHTML = '';
+            if (results.length > 0) {
+                results.forEach(series => {
+                    const resultElement = document.createElement('div');
+                    resultElement.classList.add('p-2', 'cursor-pointer', 'hover:bg-gray-200', 'flex', 'items-center');
+                    resultElement.dataset.seriesId = series.id;
+                    resultElement.dataset.seriesTitle = series.title;
+                    resultElement.dataset.seriesOverview = series.description;
+                    resultElement.dataset.seriesFirstAirDate = series.date;
+                    resultElement.dataset.seriesPoster = series.portada;
+                    resultElement.dataset.seriesBanner = series.banner;
+                    resultElement.dataset.seriesGenres = JSON.stringify(series.generos); // Store genres as JSON string
+
+                    let imageUrl = series.portada;
+                    if (imageUrl && imageUrl.startsWith('https://image.tmdb.org/')) {
+                         // Use a smaller size for the thumbnail in search results
+                         imageUrl = imageUrl.replace('/w1280/', '/w92/');
+                    } else {
+                        // Use a placeholder if no image is available
+                        imageUrl = 'https://via.placeholder.com/92x138?text=No+Image';
+                    }
+
+                    resultElement.innerHTML = `
+                        <img src="${imageUrl}" alt="${series.title}" class="w-12 h-18 object-cover rounded-md mr-4">
+                        <div>
+                            <div class="font-semibold">${series.title}</div>
+                            <div class="text-sm text-gray-600">${series.date ? new Date(series.date).getFullYear() : 'N/A'}</div>
+                        </div>
+                    `;
+
+                    resultElement.addEventListener('click', function() {
+                        populateFormWithSeriesData(this.dataset);
+                        tmdbSearchResultsDiv.innerHTML = '';
+                        tmdbSearchResultsDiv.classList.add('hidden');
+                    });
+
+                    tmdbSearchResultsDiv.appendChild(resultElement);
+                });
+                tmdbSearchResultsDiv.classList.remove('hidden');
+            } else {
+                tmdbSearchResultsDiv.innerHTML = '<div class="p-2 text-gray-500">No series found.</div>';
+                tmdbSearchResultsDiv.classList.add('hidden');
+            }
+        }
+
+        function populateFormWithSeriesData(seriesData) {
+            document.getElementById('tmdb_id').value = seriesData.seriesId;
+            document.getElementById('title').value = seriesData.seriesTitle;
+            document.getElementById('description').value = seriesData.seriesOverview;
+            document.getElementById('release_date').value = seriesData.seriesFirstAirDate;
+
+            // Select genres based on TMDB genre IDs
+            const tmdbGenreIds = JSON.parse(seriesData.seriesGenres);
+            const genreCheckboxes = document.querySelectorAll('input[name="generos[]"]');
+
+            genreCheckboxes.forEach(checkbox => {
+                if (tmdbGenreIds.includes(parseInt(checkbox.value))) {
+                    checkbox.checked = true;
+                } else {
+                    checkbox.checked = false; // Deselect if not in TMDB genres
+                }
+            });
+
+            console.log("Poster URL:", seriesData.seriesPoster);
+            console.log("Banner URL:", seriesData.seriesBanner);
         }
     </script>
 

@@ -44,11 +44,7 @@ class AuthControler extends Controller
             'code.required' => 'El código de verificación es requerido.',
             'code.string' => 'El código de verificación debe ser una cadena de texto.',
             'code.size' => 'El código de verificación debe tener 6 caracteres.',
-            'newPassword.required' => 'La nueva contraseña es obligatoria.',
             'newPassword.string' => 'La nueva contraseña debe ser una cadena de texto.',
-            'newPassword.min' => 'La nueva contraseña debe tener al menos 6 caracteres.',
-            'confirmPassword.required' => 'La confirmación de la nueva contraseña es obligatoria.',
-            'confirmPassword.same' => 'La confirmación de la nueva contraseña no coincide.',
         ];
 
         $rules = [];

@@ -33,4 +33,23 @@ class TmdbController extends Controller
 
         return response()->json($movies);
     }
+
+    /**
+     * Search for TV series using the TMDB service.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function searchSeries(Request $request)
+    {
+        $query = $request->query('query');
+
+        if (empty($query)) {
+            return response()->json(['error' => 'Query parameter is required.'], 400);
+        }
+
+        $series = $this->tmdbService->searchSeries($query);
+
+        return response()->json($series);
+    }
 }

@@ -66,4 +66,33 @@ class TmdbService
 
         return $dtoMediaResults;
     }
+
+    /**
+     * Search for TV series on TMDB.
+     *
+     * @param string $query The search query.
+     * @param int $page The page number.
+     * @param string $language The language (e.g., 'es-ES').
+     * @return array An array of DTOMedia objects.
+     */
+    public function searchSeries(string $query, int $page = 1, string $language = 'es-ES'): array
+    {
+        $params = [
+            'query' => $query,
+            'include_adult' => false,
+            'language' => $language,
+            'page' => $page,
+        ];
+
+        $response = $this->get('search/tv', $params);
+
+        $dtoMediaResults = [];
+        if ($response && isset($response['results'])) {
+            foreach ($response['results'] as $seriesData) {
+                $dtoMediaResults[] = DTOMedia::create($seriesData);
+            }
+        }
+
+        return $dtoMediaResults;
+    }
 }
