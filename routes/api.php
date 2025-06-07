@@ -54,5 +54,8 @@ Route::post('/isMediaInUserList', [MediaControler::class, 'isMediaInUserList']);
 Route::post('/getUserList', [MediaControler::class, 'getUserList']);
 Route::get('/email/verify/{token}', [VerificationResponseControler::class, 'verifyEmail'])->name('verification.verify');
 
+Route::get('/series/searchLocal', [MediaControler::class, 'searchLocalSeries']);
+
 Route::get('/tmdb/search/movies', [TmdbController::class, 'searchMovies']);
 Route::get('/tmdb/search/series', [TmdbController::class, 'searchSeries']);
+Route::get('/tmdb/series/{seriesId}/seasons', [TmdbController::class, 'getSeriesSeasons']);

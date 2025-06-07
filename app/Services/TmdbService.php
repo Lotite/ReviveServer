@@ -33,7 +33,7 @@ class TmdbService
             return $response->json();
         }
 
-        
+
         return null;
     }
 
@@ -94,5 +94,27 @@ class TmdbService
         }
 
         return $dtoMediaResults;
+    }
+
+    /**
+     * Obtener temporadas de una serie de TV desde TMDB.
+     *
+     * @param int $seriesId El ID TMDB de la serie.
+     * @param string $language El idioma (por ejemplo, 'es-ES').
+     * @return array|null Un array con los datos de las temporadas o null si no se encuentran.
+     */
+    public function getSeriesSeasons(int $seriesId, string $language = 'es-ES'): ?array
+    {
+        $params = [
+            'language' => $language,
+        ];
+
+        $response = $this->get("tv/{$seriesId}", $params);
+
+        if ($response && isset($response['seasons'])) {
+            return $response['seasons'];
+        }
+
+        return null;
     }
 }

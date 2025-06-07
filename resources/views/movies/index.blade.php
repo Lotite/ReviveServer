@@ -29,14 +29,12 @@
                     Buscar
                 </button>
             </div>
-            <div id="tmdb_search_results" class="mt-4 border border-gray-300 rounded-md max-h-60 overflow-y-auto hidden">
-                <!-- TMDB search results will be loaded here -->
+            <div id="tmdb_search_results"
+                class="mt-4 border border-gray-300 rounded-md max-h-60 overflow-y-auto hidden">
             </div>
         </div>
 
         <form action="/movies" method="POST" enctype="multipart/form-data" class="space-y-6">
-            @csrf
-
             <div>
                 <label for="title" class="block text-gray-700 text-sm font-semibold mb-2">Título</label>
                 <input type="text" id="title" name="title"
@@ -82,7 +80,7 @@ $generos = Generos::getGeneros();
                     <?php foreach ($generos as $genero): ?>
                     <div class="px-2 w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5">
                         <label class="inline-flex items-center">
-                            <input type="checkbox" name="generos[]" value="<?php    echo $genero->id; ?>"
+                            <input type="checkbox" name="generos[]" checked value="<?php    echo $genero->id; ?>"
                                 class="form-checkbox text-blue-600">
                             <span class="ml-2 text-gray-700 text-sm"><?php    echo $genero->nombre_genero; ?></span>
                         </label>
@@ -92,11 +90,13 @@ $generos = Generos::getGeneros();
             </div>
 
             <div>
-                <label for="contributor_search" class="block text-gray-700 text-sm font-semibold mb-2">Buscar Contribuidor</label>
+                <label for="contributor_search" class="block text-gray-700 text-sm font-semibold mb-2">Buscar
+                    Contribuidor</label>
                 <input type="text" id="contributor_search"
                     class="shadow-sm appearance-none border border-gray-300 rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     placeholder="Buscar por nombre de contribuidor" />
-                <div id="contributor_results" class="mt-2 border border-gray-300 rounded-md max-h-40 overflow-y-auto hidden">
+                <div id="contributor_results"
+                    class="mt-2 border border-gray-300 rounded-md max-h-40 overflow-y-auto hidden">
                     <!-- Search results will be loaded here -->
                 </div>
                 <div id="selected_contributors" class="mt-2 flex flex-wrap gap-2">
@@ -228,7 +228,7 @@ $generos = Generos::getGeneros();
 
         const selectedContributorIds = new Set();
 
-        contributorSearchInput.addEventListener('input', function() {
+        contributorSearchInput.addEventListener('input', function () {
             const searchTerm = this.value.trim();
 
             if (searchTerm.length > 2) { // Only search if more than 2 characters are typed
@@ -259,7 +259,7 @@ $generos = Generos::getGeneros();
                     resultElement.dataset.contributorName = contributor.name;
                     resultElement.dataset.contributorRole = contributor.role || '';
 
-                    resultElement.addEventListener('click', function() {
+                    resultElement.addEventListener('click', function () {
                         addContributor(this.dataset.contributorId, this.dataset.contributorName, this.dataset.contributorRole);
                         contributorResultsDiv.innerHTML = '';
                         contributorResultsDiv.classList.add('hidden');
@@ -286,7 +286,7 @@ $generos = Generos::getGeneros();
                 const removeButton = document.createElement('button');
                 removeButton.classList.add('ml-1', 'inline-flex', 'items-center', 'justify-center', 'w-4', 'h-4', 'text-blue-400', 'hover:text-blue-600', 'rounded-full', 'focus:outline-none');
                 removeButton.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
-                removeButton.addEventListener('click', function() {
+                removeButton.addEventListener('click', function () {
                     removeContributor(id, selectedElement);
                 });
 
@@ -313,7 +313,7 @@ $generos = Generos::getGeneros();
         const tmdbSearchButton = document.getElementById('tmdb_search_button');
         const tmdbSearchResultsDiv = document.getElementById('tmdb_search_results');
 
-        tmdbSearchButton.addEventListener('click', function() {
+        tmdbSearchButton.addEventListener('click', function () {
             const query = tmdbSearchInput.value.trim();
 
             if (query.length > 2) {
@@ -349,8 +349,8 @@ $generos = Generos::getGeneros();
 
                     let imageUrl = movie.portada;
                     if (imageUrl && imageUrl.startsWith('https://image.tmdb.org/')) {
-                         // Use a smaller size for the thumbnail in search results
-                         imageUrl = imageUrl.replace('/w1280/', '/w92/');
+                        // Use a smaller size for the thumbnail in search results
+                        imageUrl = imageUrl.replace('/w1280/', '/w92/');
                     } else {
                         // Use a placeholder if no image is available
                         imageUrl = 'https://via.placeholder.com/92x138?text=No+Image';
@@ -366,7 +366,7 @@ $generos = Generos::getGeneros();
                     `;
 
 
-                    resultElement.addEventListener('click', function() {
+                    resultElement.addEventListener('click', function () {
                         populateFormWithMovieData(this.dataset);
                         tmdbSearchResultsDiv.innerHTML = '';
                         tmdbSearchResultsDiv.classList.add('hidden');
@@ -427,20 +427,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'])) {
     $post["type"] = "movie";
     $movie = Movies::create($post);
 
-        if ($movie) {
-            $id = $movie;
+    if ($movie) {
+        $id = $movie;
 
-            if (isset($_POST['generos']) && is_array($_POST['generos'])) {
-                GeneroMedia::associateMediaWithGenres($id, $_POST['generos']);
-            }
+        if (isset($_POST['generos']) && is_array($_POST['generos'])) {
+            GeneroMedia::associateMediaWithGenres($id, $_POST['generos']);
+        }
 
-            // Associate contributors with the movie
-            if (isset($_POST['contributor_ids']) && !empty($_POST['contributor_ids'])) {
-                $contributorIds = explode(',', $_POST['contributor_ids']);
-                Credit::associateMediaWithContributors($id, $contributorIds);
-            }
+        // Associate contributors with the movie
+        if (isset($_POST['contributor_ids']) && !empty($_POST['contributor_ids'])) {
+            $contributorIds = explode(',', $_POST['contributor_ids']);
+            Credit::associateMediaWithContributors($id, $contributorIds);
+        }
 
-            if (isset($_FILES['portada']) && $_FILES['portada']['error'] === UPLOAD_ERR_OK) {
+        if (isset($_FILES['portada']) && $_FILES['portada']['error'] === UPLOAD_ERR_OK) {
             $portadaPath = MediaStorageManager::savePoster(new UploadedFile(
                 $_FILES['portada']['tmp_name'],
                 $_FILES['portada']['name'],

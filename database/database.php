@@ -148,13 +148,13 @@ class BD
      * @param int|null $min Parámetro no utilizado actualmente (opcional).
      * @return array Arreglo asociativo con los resultados de la consulta.
      */
-    public static function getData(string $table, $data = "*", ?array $condition = null, ?int $max = null, ?int $min = null): array
+    public static function getData(string $table, $data = "*", ?array $condition = null): array
     {
         if (is_array($data)) {
             $data = self::implodeValues($data);
         }
 
-        return self::starTransaction(function () use ($table, $data, $condition, $max, $min) {
+        return self::starTransaction(function () use ($table, $data, $condition) {
             if (empty($condition)) {
                 $prepare = self::$consexion->prepare("SELECT $data FROM $table");
                 $prepare->execute();

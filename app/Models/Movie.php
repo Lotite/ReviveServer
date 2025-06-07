@@ -29,14 +29,30 @@ class Movie
         if (is_object($data)) {
             $data = (array) $data;
         }
-        
+
         return new Movie([
             'id' => $data['id'] ?? 0,
             'media_id' => $data['media_id'] ?? 0,
             'duration' => $data['duration'] ?? null,
         ]);
     }
-    
+
+
+    /**
+     * Obtiene la duración de una película dado el ID del medio.
+     *
+     * @param int $mediaId El ID del medio (media).
+     * @return int|null La duración de la película en minutos, o null si no se encuentra.
+     */
+    public static function getDuration(int $mediaId): ?int
+    {
+        $movieDuration = BD::getFirstRow("movies", "*", ["media_id" => $mediaId]);
+        if (!$movieDuration) {
+            return null;
+        }
+        return $movieDuration['Duration'] ?? null;
+    }
+
 
     /**
      * Devuelve el objeto Media asociado con este Movie.

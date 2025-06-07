@@ -26,10 +26,47 @@ use App\Http\Controllers\EpisodeController;
 Route::get('/episodes', [EpisodeController::class, 'index']);
 Route::post('/episodes', [EpisodeController::class, 'store']);
 
+
+
+
 Route::get('/media/{id}/{filename}', function ($id, $filename) {
     $path = storage_path("app/public/media/{$id}/{$filename}");
 
     if (!File::exists($path)) {
+        // Determinar el tipo de medio basado en el nombre del archivo o id
+        $lowerFilename = strtolower($filename);
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+
+        // Verificar si es un video por la extensión
+        $videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv'];
+        if (in_array($extension, $videoExtensions)) {
+            // Retornar archivo de video por defecto si existe
+            $defaultVideoPath = storage_path("app/public/media/video.mp4");
+            if (File::exists($defaultVideoPath)) {
+                $type = File::mimeType($defaultVideoPath);
+                $headers = [
+                    'Content-Type' => $type,
+                    'Accept-Ranges' => 'bytes',
+                    'Content-Length' => filesize($defaultVideoPath),
+                ];
+                $fileContent = File::get($defaultVideoPath);
+                return Response::make($fileContent, 200, $headers);
+            } else {
+                abort(404);
+            }
+        }
+
+        if (strpos($lowerFilename, 'banner') !== false) {
+            $url = "https://picsum.photos/1000/700?random={$id}";
+            return redirect($url);
+        }
+
+        if (strpos($lowerFilename, 'portada') !== false) {
+            $url = "https://picsum.photos/700/1000?random={$id}";
+            return redirect($url);
+        }
+
+        // Fallback por defecto: abortar con 404
         abort(404);
     }
 

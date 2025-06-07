@@ -16,7 +16,7 @@ class TmdbController extends Controller
     }
 
     /**
-     * Search for movies using the TMDB service.
+     * Buscar películas usando el servicio TMDB.
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -35,7 +35,7 @@ class TmdbController extends Controller
     }
 
     /**
-     * Search for TV series using the TMDB service.
+     * Buscar series de TV usando el servicio TMDB.
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -51,5 +51,25 @@ class TmdbController extends Controller
         $series = $this->tmdbService->searchSeries($query);
 
         return response()->json($series);
+    }
+
+    /**
+     * Obtener temporadas de una serie de TV usando el servicio TMDB.
+     *
+     * @param Request $request
+     * @param int $seriesId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getSeriesSeasons(Request $request, int $seriesId)
+    {
+        $language = $request->query('language', 'es-ES'); 
+
+        $seasons = $this->tmdbService->getSeriesSeasons($seriesId, $language);
+
+        if (is_null($seasons)) {
+            return response()->json(['error' => 'Series or seasons not found.'], 404);
+        }
+
+        return response()->json($seasons);
     }
 }

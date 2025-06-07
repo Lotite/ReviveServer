@@ -57,6 +57,21 @@ class Episode
         return Media::NewMedia($mediaData);
     }
 
+    /**
+     * Obtiene la duración de un episodio dado el ID del medio.
+     *
+     * @param int $mediaId El ID del medio (media).
+     * @return int|null La duración del episodio en minutos, o null si no se encuentra.
+     */
+    public static function getDuration(int $mediaId): ?int
+    {
+        $episode = BD::getFirstRow("episodes", "*", ["media_id" => $mediaId]);
+        if (!$episode) {
+            return null;
+        }
+        return $episode['Duration'] ?? null;
+    }
+
 
     /**
      * Obtiene un episodio por su ID de media.

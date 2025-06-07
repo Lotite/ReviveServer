@@ -99,15 +99,21 @@ class Movies extends Table
     public static function create(array $movie): bool|int
     {
 
-        $result = Media::create($movie);
 
-        if ($result) {
-            $data = [
-                'media_id' => $result,
-                'duration' => $movie["duration"],
+        $mediaId = Media::create($movie);
+
+        if ($mediaId) {
+            $movieData = [
+                'media_id' => $mediaId,
+                'duration' => $movie["duration"] ?? null,
             ];
-            if (BD::InsertIntoTable('movies', $data))
-                return $result;
+            if (isset($movie['genre_ids']) && is_array($movie['genre_ids'])) {
+                \App\Models\GeneroMedia::associateMediaWithGenres($mediaId, $movie['genre_ids']);
+            }
+
+            if (BD::InsertIntoTable('movies', $movieData)) {
+                return $mediaId; 
+            }
         }
 
         return false;
