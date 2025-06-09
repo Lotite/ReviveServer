@@ -114,8 +114,9 @@ class MediaControler extends Controller
     public function getCarouselMedia(Request $request)
     {
         $type = $request->input('type', '');
-        $medias = Medias::getRandomMediaByType($type, 10);
 
+        
+        $medias = Medias::getRandomMediaByType($type, 10);
         return Controller::responseMessage(success: true, data: $medias);
     }
 

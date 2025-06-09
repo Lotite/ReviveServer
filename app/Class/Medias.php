@@ -5,10 +5,8 @@ namespace App\Class;
 use App\Class\Table;
 use App\Database\BD;
 use App\Models\Media;
-
-use App\Class\Movies;
+use \App\DTO\DTOMedia;
 use App\Class\Series;
-use Illuminate\Support\Facades\DB;
 
 class Medias extends Table
 {
@@ -17,24 +15,20 @@ class Medias extends Table
      *
      * @param string|null $type Tipo de media a filtrar (movie, serie, etc.). Si es null, no se filtra por tipo.
      * @param int $quantity Cantidad de media a retornar.
-     * @return Medias Lista de objetos Medias.
+     * @return array<DTOMedia> Lista de objetos Medias.
      */
     public static function getRandomMediaByType(string|null $type = "", $quantity = 10)
     {
         $sql = "SELECT * FROM media where type ";
         $where = "in ('movie','serie')";
-        if($type) $where = " = '$type'";
-
+        if ($type)
+            $where = " = '$type'";
         $sql .= $where;
-        
         $sql .= " ORDER BY RAND() LIMIT $quantity";
-
         $mediasInfo = BD::getDataWithQuery($sql);
-
         if (empty($mediasInfo)) {
             return new Medias();
         }
-
         return (new Medias($mediasInfo))->getDTO_List();
     }
     /**

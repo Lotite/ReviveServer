@@ -35,6 +35,7 @@
         </div>
 
         <form action="/movies" method="POST" enctype="multipart/form-data" class="space-y-6">
+            @csrf
             <div>
                 <label for="title" class="block text-gray-700 text-sm font-semibold mb-2">Título</label>
                 <input type="text" id="title" name="title"
@@ -434,7 +435,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['title'])) {
             GeneroMedia::associateMediaWithGenres($id, $_POST['generos']);
         }
 
-        // Associate contributors with the movie
+
         if (isset($_POST['contributor_ids']) && !empty($_POST['contributor_ids'])) {
             $contributorIds = explode(',', $_POST['contributor_ids']);
             Credit::associateMediaWithContributors($id, $contributorIds);

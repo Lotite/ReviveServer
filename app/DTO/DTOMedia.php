@@ -51,18 +51,18 @@ class DTOMedia
             $this->id = $source->id;
             $this->title = $source->titulo;
             $idImg = $this->id % 10;
-            $this->portada = "http://192.168.1.141:81/media/$source->id/portada.webp";
-            $this->banner = "http://192.168.1.141:81/media/$source->id/banner.webp";
+            $this->portada =  env('APP_URL') . "/media/$source->id/portada.webp";
+            $this->banner = env('APP_URL') . "/media/$source->id/banner.webp";
             $this->description = $source->descripcion;
             $this->reseña = rand(30, 50) / 10;
             $this->date = $source->release_date;
             $this->number = 0;
             $this->type = $source->type;
-            $this->clasificacion = 20;
+            $this->clasificacion = 13;
             $this->generos = $source->getGenerosName();
             $this->reparto = $source->getRepartoName(true);
             $this->director = $source->getDirector();
-            $this->url = "http://192.168.1.141:81/media/$source->id/video.mp4";
+            $this->url = env('APP_URL') .  "/media/$source->id/video.mp4";
             switch ($this->type) {
                 case 'serie':
                     $seriesId = Serie::getSeriesId($source->id);

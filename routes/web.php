@@ -66,7 +66,6 @@ Route::get('/media/{id}/{filename}', function ($id, $filename) {
             return redirect($url);
         }
 
-        // Fallback por defecto: abortar con 404
         abort(404);
     }
 

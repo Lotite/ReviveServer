@@ -8,7 +8,12 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+
+    'allowed_origins' => [
+        'http://localhost:5173',   
+        'http://revivestreem.site', 
+        'https://revivestreem.site',
+    ],
 
     'allowed_origins_patterns' => [],
 

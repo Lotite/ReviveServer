@@ -198,6 +198,9 @@ class AuthControler extends Controller
         return Controller::ControlerException($request, function () use ($request) {
 
             DataManager::initialize($request);
+
+
+
             $token = DataManager::getData("device");
             if ($token == null)
                 return Controller::responseMessage(false, 'Sesion denegada');
